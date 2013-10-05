@@ -1,0 +1,1127 @@
+
+<!doctype linuxdoc system>
+
+<article>
+
+<title>``GNU Privacy Guard'' (GnuPG) Mini Como
+<author>Michael Fischard v. Mollard <htmlurl url="mailto:fischer@math.uni-goettingen.de" name="&lt;fischer@math.uni-goettingen.de&gt;"> (versión en alemán)
+&nl;
+Brenno J.S.A.A.F. de Winter <htmlurl url="mailto:brenno@dewinter.com" name="&lt;brenno@dewinter.com&gt;"> (versión en inglés)
+&nl;
+Horacio <htmlurl url="mailto:homega@ciberia.es" name="&lt;homega@ciberia.es&gt;"> (versión en castellano)
+
+<date>v0.1.3, septiembre de 1999
+
+<abstract>
+Este documento trata sobre la instalación, configuración y uso de <tt/Gnu
+Privacy Guard/ (<tt/GnuPG/), un sistema de codificación de código libre y
+desarrollo abierto, compatible con <tt/OpenPGP/.  Con el fin de mantener
+este programa totalmente libre, se ha evitado el uso de algoritmos con
+patentes propietarias restrictivas, como las de IDEA y RSA.
+El documento original fue escrito en alemán por Michael Fischard v. Mollard,
+y posteriormente traducido, y revisado en algunos puntos, al inglés por
+Brenno J.S.A.A.F. de Winter.  La traducción de este documento al castellano
+se llevó a cabo desde la versión inglesa.  El capítulo 5 ha sido añadido en
+la versión en castellano, y también se han incluido algunos recursos y otra
+información en castellano.
+Esta versión es una revisión de la versión 0.1.2, y no incluye ninguna
+temática nueva, tan sólo su conversión de código HTML a código SGML para su
+posterior reconversión a otros formatos.  También se han corregido algunos
+errores de forma y/o traducción.
+</abstract>
+
+<toc>
+
+<sect>Conceptos Básicos<label id="GPGMiniComo-Conceptos">
+
+<p>
+<sect1>Sistemas de Claves Públicas
+
+<p>Para poder entender mejor el sistema de codificación usado por los
+sistemas de claves asimétricas (ie. claves públicas y privadas), es 
+necesario entender las diferencias con los sistemas de claves simétricas 
+(ie. claves secretas).
+
+<p>Los sistemas de cifrado con <em/clave simétrica/ son aquéllos en
+los que la clave que se usa para cifrar una serie de datos, es la misma
+que la que se usará para descifrar estos datos.  En el caso del correo
+electrónico, el remitente cifraría el mensaje con una <em/clave secreta/,
+y para que el destinatario pueda descifrarlo, necesitaría haber obtenido
+previamente esta misma clave de un modo &laquo;seguro&raquo;, o sea de 
+modo que la clave no haya podido ser interceptada durante la entrega.  Si 
+no tenemos la completa seguridad de que el intercambio de la clave ha sido 
+seguro, la validez de este sistema es nula.
+
+<p>Por el contrario, los sistemas de cifrado con <em/claves asimétricas/ usan
+claves distintas para el cifrado y posterior descifrado de los datos.  En un
+caso como el anterior, el remitente usaría la <em/clave pública/ del
+destinatario para cifrar el mensaje, y el destinatario descifraría el mensaje
+con su propia <em/clave privada/.  Así pues, la <em/clave privada/ no debe ser
+accesible para <bf/nadie/ que no sea el propio dueño de la misma, mientras que
+la <em/clave pública/, puede ser entregada a cualquier persona.  En un
+sistema de cifrado bien implementado, la <em/clave privada/ no debe derivar
+nunca de la <em/clave pública/.
+
+<sect1>Firmas Digitales
+
+<p>El concepto de la <bf/firma digital/ se basa en la verificación de la
+autoría de un mensaje.  Esto quiere decir que se puede comprobar que el
+destinatario del mensaje puede comprobar que el «supuesto» remitente es quien
+afirma ser.  Para ello, el remitente, una vez compuesto el mensaje, lo firma
+usando su propia clave privada.  El destinatario, una vez ha recibido el
+mensaje, comprobará la veracidad de éste, esto es, lo verificará usando la
+clave pública del remitente.
+
+<p>Este método es de especial utilidad para reducir riesgos de seguridad en
+nuestros sistemas (nos podrían enviar un supuesto parche para un programa, y
+éste en realidad ser un virus o un troyano);  también podrían enviarnos
+información o datos, como provenientes de una fuente lícita o fiable.  En
+ambos casos, no sería muy difícil falsificar la dirección y nombre del
+remitente, pero sí imposible falsificar la firma digital de éste.
+
+<p>Como ya hemos dicho, la verificación de un mensaje firmado digitalmente se
+lleva a cabo mediante el uso de la <bf/clave pública/ del remitente <bf/sobre
+el texto/ del propio mensaje.  De este modo no sólo podemos verificar la
+identidad del autor, sino que también podemos comprobar la integridad del
+mensaje, ya que la firma digital ha sido generada con el <bf/texto/ y la
+<bf/clave privada/.  Así pues, una alteración o modificación del texto «a
+posteriori», o cualquier manipulación del mensaje (especialmente si hacemos
+uso de las especificaciones MIME/PGP), daría como resultado un error en la
+verificación.
+
+<sect1>Anillos de Confianza
+
+<p>Un punto flaco en los algoritmos de clave asimétrica es la transmisión del
+código público.  Es posible que una persona ponga en circulación código con
+un identificador de usuario falso.  Si se codifican mensajes con este pseudo
+código, el intruso los puede descodificar y leerlos.
+
+<p>La solución <tt/PGP/ (y por consiguiente la solución <tt/GnuPG/) está en
+firmar los códigos.  La clave pública de un usuario puede estar <bf/firmada/
+con las claves de otros usuarios.  El objetivo de estas firmas es el de
+reconocer que el UID (identificador de usuario) de la clave pertenece al
+usuario a quien dice pertenecer.  A partir de ahí es un problema de cada
+usuario de <tt/GnuPG/ el decidir hasta qué punto se puede fiar de la firma.
+Una clave se puede considerar fiable cuando se confía en el remitente y
+cuando se sabe con seguridad que dicha clave pertenece a éste.  Sólo cuando
+se puede confiar plenamente en la clave del firmante, se puede confiar en la
+firma que acompaña a la clave de un tercero.  Para tener la certeza de que la
+clave es correcta hay que compararla con la <bf/huella digital/ por medio de
+canales fiables (por ejemplo, podríamos buscar el teléfono en la guía y
+llamarle, y que nos la dijera de palabra para poder compararla), antes de
+darle una confianza absoluta.
+
+<sect1>Límites de Seguridad
+
+<p>Si lo que se desea es mantener la confidencialidad de los datos que se
+poseen, no basta con determinar qué algoritmo de cifrado se va a usar;
+también es necesario pensar en la seguridad general del sistema.  En
+principio, <tt/PGP/ está considerado como suficientemente seguro, y hasta el
+momento no se sabe que haya habido ningún incidente en el que una clave PGP
+haya sido descodificada.  Pero eso no significa que todo lo cifrado sea
+seguro;  si la NSA (Agencia de Seguridad Nacional de los EE.UU.) hubiera
+conseguido descodificar una clave PGP mediante criptoanálisis, analización
+del código, o cualquier otro modo, no es probable que lo hicieran público.
+Pero aún en el caso de que las claves PGP fueran a todas luces imposibles de
+descodificar, otros tipos de ataques a la seguridad pueden ser utilizados.  A
+principios de Febrero fue detectado un troyano que buscaba las claves PGP en
+el disco duro, y las transfería al atacante mediante FTP.  Si en este caso
+hubiéramos escogido una contraseña débil o fácil, un simple análisis que
+consistiera en un «ataque de diccionario» la descubriría en poco tiempo.
+
+<p>Otra posibilidad técnica, aunque más difícil, es la de los troyanos que
+recogen entradas de teclado y las transmiten al asaltante.  También es
+posible, aunque muy difícil, pasar el contenido de una pantalla a otra. En
+este último caso no sería necesario ningún análisis sobre datos cifrados, ya
+que se obtendrían «pre-cifrados».
+
+<p>Por todo esto es necesaria una planificación de la seguridad que esté bien
+prevista y que minimice los riesgos.
+
+<p>La idea no es la de recrear una atmósfera de paranoia entre la gente, sino
+dejar claro que para implementar un sistema seguro no basta con la
+instalación de un programa criptográfico, que si bien es un paso hacia un
+sistema más seguro, no es una solución completa.  Troyanos como el aparecido
+en Marzo de 1999 (Melissa) probaron que muchas compañías no se encuentran
+preparadas en temas de seguridad.
+
+
+<sect>Instalación y Configuración
+
+<p>
+<sect1>Fuentes de GnuPG
+
+<p>El sitio oficial para para la distribución de <tt/GnuPG/ es <htmlurl
+url="ftp://ftp.guug.de/pub/gcrypt/gnupg/" name="sitio oficial de GnuPG">.  
+En las páginas oficiales de <htmlurl url="http://www.gnupg.org/download.html"
+name="GnuPG"> también se pueden encontrar enlaces a réplicas oficiales.
+
+Debido a restricciones legales no se permite bajar material criptográfico
+desde servidores localizados en los EE.UU., a los no residentes en este país.
+En EE.UU. existen unas leyes que imponen restricciones a la exportación de
+código criptográfico así como de programas que los incluyan.  Por esta razón
+PGP se encuentra siempre disponible en dos versiones:  una internacional y
+otra para los EE.UU.  El código fuente para la versión internacional fue
+exportado en formato ascii imprimido en un libro.  A continuación fue
+escaneado en Europa (Oslo) y recompuesto.  Se puede obtener más información
+al respecto en la <htmlurl url="http://www.pgpi.com/" name=" página
+internacional de PGP">.  La versión internacional de PGP puede ser importada
+libremente a los EE.UU. siempre y cuando no se vuelva a re-exportar fuera de
+éstos.  Una vez se ha instalado una versión de <tt/GnuPG/ o <tt/PGP/, se
+debería verificar la firma digital que acompaña al fichero (Ver <ref
+id="fyv" name="Firmar y Verificar">).
+
+<sect1>Configuración
+
+<p>GnuPG se puede obtener como un paquete de binarios de <htmlurl
+url="http://www.debian.org/" name="Debian"> (.deb), como un paquete de
+binarios de <htmlurl url="http://www.redhat.com/" name="RedHat"> (.rpm), o en
+código fuente.  Los paquetes son archivos comprimidos de los ficheros binarios
+que se pueden instalar con las correspondientes herramientas, según la
+distribución.  Si se necesita instalar GnuPG en otros sistemas operativos,
+entonces lo debe compilar uno mismo a partir de los fuentes.  Se agradece que
+quien compile un paquete de instalación para un sistema o arquitectura
+diferente, lo haga de dominio público.
+
+<p>Dado que la mayoría del desarrollo de GnuPG tiene lugar en máquinas x86
+bajo <htmlurl url="http://www.linux.org/" name="Linux">, la migración a un
+sistema diferente no debería ser ningún problema.  La lista de sistemas
+operativos que están soportados por GnuPG se puede encontrar en las páginas
+de <htmlurl url="http://www.gnupg.org/" name="GnuPG">.  El procedimiento que
+se describe a continuación no es exclusivo de ninguna plataforma.  Este
+procedimiento se puede usar para compilar e instalar GnuPG partiendo de un
+archivo comprimdo del código fuente (foo.tar.gz).
+
+<p>Descomprimir y desarchivar el paquete con los fuentes con la orden (si
+estamos usando <tt/Gnu tar/):
+
+<tscreen><code>
+$ tar zxvf gnupg-?.?.?.tar.gz
+</code></tscreen>
+
+<p>El siguiente paso es cambiar al directorio que contenga el código fuente,
+y ejecutar el guión de configuración:
+
+<tscreen><code>
+$ ./configure
+</code></tscreen>
+
+<p>Con este paso no debería suceder nada especial;  si ejecutamos
+
+<tscreen><code>
+$ ./configure --help
+</code></tscreen>
+
+se pueden ver las opciones de configuración que existen para la compilación.
+Si durante la internacionalización (GET text) ocurriera algún problema, se
+puede incluir una versión que venga código fuente, usando la opción
+
+<tscreen><code>
+--with-included-gettext
+</code></tscreen>
+
+o desactivarla usando la opción
+
+<tscreen><code>
+--disable-NLS
+</code></tscreen>
+
+<sect1>Compilación
+
+<p>A continuación, para empezar a compilar ejecutaremos la orden de
+compilación:
+
+<tscreen><code>
+$ make
+</code></tscreen>
+
+<p>Esto debería funcionar sin problemas.  Si ocurriera algo anormal, se
+seguirán los siguientes pasos (en el mismo orden en el que se describen aquí):
+Primero, intentar solucionarlo por uno mismo (haciendo uso de la
+documentación existente);  segundo, asegurarnos de que no es un error
+conocido (comprobar el fichero BUGS en <htmlurl url="http://www.gnupg.org/"
+name="http://www.gnupg.org">.  Si estos pasos no resuelven el problema,
+enviar la pregunta a la lista de correo de GnuPG (en inglés) (ver <ref
+id="font" name="Fuentes de Información">).  Por si el problema estuviera
+relacionado con la compilación, se debería intentar <tt/make clean/, ejecutar
+<tt/configure/ de nuevo, e intentar otra vez la compilación.  Si nada de esto
+soluciona el problema, es el momento de preocuparse de verdad.
+
+<sect1>Instalación
+
+<p>Suponiendo que hayamos compilado el programa sin problemas, el siguiente
+paso es instalarlo.  Para ello ejecutaremos la orden de instalación:
+
+<tscreen><code>
+$ make install
+</code></tscreen>
+
+<p>que copiará el programa y las páginas de manual en el directorio de
+instalación.  Si no hemos cambiado el directorio de instalación cuando
+ejecutamos <tt>./configure</tt>, éste será <tt>/usr/local/share/gnupg/</tt>
+por defecto.  Es posible encontrar este directorio en el fichero
+<tt/options.skel/.  Cuando se cambie <tt/options.skel/, si se copia a
+<tt>~/.gnupg/options</tt>, se usarán los ajustes típicos.  Al crear
+<tt>~/.gnupg/</tt> la acción copiar debería ser automática.  Todas las
+opciones posibles están bien documentadas, y tratar de explicarlas aquí no
+sería de utilidad.
+
+<p>Se puede ejecutar GnuPG como suid root.  De este modo el programa se
+ejecutará con todos los permisos que tiene el superusuario, y se excluye la
+posiblidad de que ciertas partes del programa se guarden externamente y
+puedan ser leídas por cualquiera.  Sin entrar a valorar los riesgos de
+ejecutar el programa como superusuario, se debería alertar de los peligros
+que conllevaría un troyano, ya que éstos, si se está ejecutando como
+superusuario, pueden dañar todo el sistema.  Si por esta razón, o por
+cualquier otra, se decide no ejecutar GnuPG como root, es posible desactivar
+el aviso activando <tt/no-secmem-warning/ en <tt>~/gnupg/options</tt>.
+
+<sect>Uso y Gestión de las Claves
+
+<p>
+<sect1>Generar una Clave
+
+<p>Con la orden
+
+<tscreen><code>
+$ gpg --gen-key
+</code></tscreen>
+
+se genera un nuevo par de claves (el par se compone de clave privada y
+clave pública).  La primera pregunta es qué algoritmo se va a usar.  
+Para más información sobre algoritmos, ver 
+<htmlurl url="http://www.hertreg.ac.uk/ss/pgpfaq.html" 
+name="PGP DH vs. RSA FAQ"> o 
+<ref id="BSchneier" name="Applied Cryptography">.
+El algoritmo recomendado por GnuPG es DSA/ElGamal, ya que éste no está
+patentado.
+
+<p>La siguiente pregunta es la longitud de la clave.  Esta parte depende
+de los requerimientos del usuario.  Es necesario elegir entre la seguridad
+y el tiempo de los procesos.  Cuanto mayor sea una clave, menor será el
+riesgo de que el mensaje sea descodificado si es interceptado, pero también
+aumentará el tiempo que empleará para el cálculo de los procesos.  El tamaño
+mínimo que requiere GnuPG es de 768 bits, aunque mucha gente opina que
+debería ser de 2048 (que es el máximo con GnuPG en este momento).
+Para DSA 1024 es un tamaño fijo.
+Cuando la seguridad es una prioridad más alta que el tiempo, la opción es
+elegir el tamaño de clave más grande que se permita.
+
+<p>El sistema nos pedirá a continuación que se introduzca el nombre, 
+comentario y dirección de correo electrónico.  El código será calculado en 
+base a estas entradas.  Esto se puede cambiar más tarde (ver <ref id="admon"
+name="Administración de Claves">).  La dirección de correo electrónico que 
+se escoja debería ser una válida, ya que ésta será usada para firmar el
+identificador de usuario.  Si esta dirección se modifica en algún modo, la 
+firma no corresponderá.  Finalmente, se puede introducir un comentario.
+
+<p>El último paso consiste en introducir una contraseña.  Nótese la 
+diferencia entre los términos anglosajones para la palabra 
+&laquo;contraseña&raquo;: el término &dquot;password&dquot; indica una 
+&dquot;palabra de paso&dquot;, mientras que el término &dquot;passphrase&dquot; 
+indica una &dquot;frase de paso&dquot;.  Por tanto esta contraseña se debe
+componer de más de una palabra.  Para que una contraseña sea efectiva 
+(segura), deberá contener los siguientes elementos:
+
+<itemize>
+<item>que sea larga;
+<item>que combine mayúsculas, minúsculas y números;
+<item>que contenga carácteres especiales (no alfanuméricos);
+<item>que sea difícil de adivinar.  Por lo tanto, que no sean nombres, fechas
+significativas, números de teléfono, números de documentos, ...
+</itemize>
+
+En general, para una contraseña fuerte es aconsejable intercalar maYúsCUlas 
+con mInúsCulas, números, otros carácteres no alfanuméricos, etc.  Al escoger 
+las palabras y frases debemos evitar aquellas palabras demasiado obvias, o 
+fechas significativas, y nunca usar citas de libros o frases famosas.  Dicho 
+esto, debemos asegurarnos de que la contraseña que elijamos sea lo 
+suficientemente difícil para que no pueda ser traspasada por un &laquo;ataque 
+de fuerza bruta&raquo;, ni siquiera por un &laquo;ataque de diccionario&raquo;,
+pero lo suficientemente fácil como para que la recordemos.  Si olvidáramos una 
+contraseña nuestra clave quedaría totalmente inutilizada, y los criptogramas 
+con ella cifrados, indescifrables.  Ante esta posibilidad se recomienda crear 
+siempre certificados de revocación junto con las claves (ver <ref id="revoc" 
+name="Certificados de Revocación">).
+
+<p>Una vez se han introducido todos los datos requeridos, empieza el proceso 
+de generación de las claves, que tardará un tiempo dependiendo del tamaño de 
+éstas.  Durante este proceso el programa recoge datos aleatorios que usará para 
+generar las claves;  un modo para ayudar a generar estos datos es cambiando a 
+una consola virtual diferente y usando el teclado mientras el proceso está en 
+marcha.
+
+<sect1>Exportar Claves
+
+<p>La orden para exportar la clave es:
+
+<tscreen><code>
+$ gpg --export [UID]
+</code></tscreen>
+
+Si no designamos un identificador de usuario (UID) todas las claves presentes 
+en el anillo de claves serán exportadas.  El resultado es enviado por defecto 
+a <tt/stdout/, pero con la opción <tt/-o/ podemos especificar que sea enviado 
+a un fichero.  Se recomienda usar la opción <tt/-a/ para que el resultado sea
+un fichero de 7-bit ASCII en lugar de un fichero binario.
+
+Al exportar la clave pública se amplía el abanico de personas con las que se 
+podrá comunicar de modo seguro.  La clave se puede exportar poniéndola en una 
+página <em/web/, mediante <em/finger/, <em/ftp/, subiéndola en un servidor de 
+claves públicas, o cualquier otro método.
+
+
+<sect1>Importar Claves
+
+<p>Cuando se recibe la clave pública de otra persona hay que añadirla a la 
+base de datos (anillo de claves) para poder hacer uso de ella.  La orden para 
+importarlas es la siguiente:
+
+<tscreen><code>
+$ gpg --import [fichero]
+</code></tscreen>
+
+Si se omite el nombre del fichero se leerán los datos de <tt/stdin/.  
+El fichero puede contener una sola clave o varias a la vez, pertenecientes a 
+diferentes personas o a la misma.
+
+
+<sect1>Revocar Claves<label id="revoc">
+
+<p>Existen diversos motivos por los que se puede desear revocar una clave.  
+Por ejemplo, si la clave secreta ha sido robada, o si se ha olvidado la 
+contraseña de ésta.  En cualquier caso la orden de revocación es:
+
+<tscreen><code>
+$ gpg --gen-revoke
+</code></tscreen>
+
+Esto creará un <bf/Certificado de Revocación/.  Para ello es necesaria la
+clave secreta, de lo contrario cualquiera podría hacer un certificado y 
+revocar una clave que no le perteneciera.  En el caso anterior en el que la 
+contraseña ha sido olvidada, se hace imposible generar un certificado de 
+revocación.  Por este motivo es muy aconsejable generar un certificado de 
+revocación a continuación de la generación de la clave.  Es primordial guardar 
+este certificado en un lugar seguro para que nadie pueda usarlo y revocar la 
+clave.
+
+<sect1>Administrar las Claves<label id="admon">
+
+<p>Existe un fichero que es a modo de una base de datos, en el que se guardan 
+todos los datos relacionados con las claves, incluido los valores relativos al 
+grado de confianza (<em/Ownertrust/);  para más información sobre esto leer 
+<ref id="firmk" name="Firmar las claves">. Con orden
+
+<tscreen><code>
+$ gpg --list-keys
+</code></tscreen>
+
+se muestran todas las claves presentes.  Para poder ver también las firmas en 
+cada clave, usar:
+
+<tscreen><code>
+$ gpg --list-sigs
+</code></tscreen>
+
+(ver <ref id="firmk" name="Firmar las claves"> para más información).  Para 
+ver las huellas digitales (<em/fingerprints/):
+
+<tscreen><code>
+$ gpg --fingerprint
+</code></tscreen>
+
+Las &laquo;huellas digitales&raquo; sirven para confirmar la identidad de la
+persona.  Esta orden nos muestra una lista alfanumérica que podemos comprobar, 
+por ejemplo, por teléfono.
+
+Para ver el listado de las claves secretas:
+
+<tscreen><code>
+$ gpg --list-secret-keys
+</code></tscreen>
+
+Nota: el listado de las huellas digitales y las firmas de las claves secretas 
+no es de ninguna utilidad.
+
+Para eliminar una clave pública:
+
+<tscreen><code>
+$ gpg --delete-key UID
+</code></tscreen>
+
+Para eliminar una clave secreta:
+
+<tscreen><code>
+$ gpg --delete-secret-key
+</code></tscreen>
+
+Existe otra orden que es relevante para trabajar con las claves:
+
+<tscreen><code>
+$ gpg --edit-key UID
+</code></tscreen>
+
+Para esta orden necesitaremos la contraseña, y podemos, entre otras cosas, 
+editar la fecha de caducidad, añadir una huella digital y firmar la clave.
+
+
+<sect1>Firmar las Claves<label id="firmk">
+
+<p>Como se ha mencionado anteriormente en la introducción, existe un talón de 
+Aquiles en el sistema: la autentificación de las claves públicas.  Si se 
+obtiene una clave pública errónea, ya se puede despedir uno del valor del 
+cifrado.  Para evitar estos riesgos está la posibilidad de firmar las claves.  
+Cuando tenemos la certeza de que una clave es válida y pertenece a quien dice, 
+podemos firmarla digitalmente, de modo que otros que confíen en nuestra firma 
+la puedan dar por válida.
+
+Usando el comando 
+
+<tscreen><code>
+$ gpg --edit-key UID
+</code></tscreen>
+
+para la clave que queremos firmar, nos llevará al subcomando 
+
+<tscreen><code>
+Command> sign
+</code></tscreen>
+
+<bf/¡¡¡Sólo se debe firmar una clave cuando se esté ABSOLUTAMENTE SEGURO de 
+que dicha clave es auténtica!!!/  En realidad, sólo se puede estar totalmente 
+seguro cuando la clave se ha recibido en mano, o por ejemplo si se ha recibido 
+por correo y a continuación se han comprobado las huellas digitales por 
+correo.  Una clave no debe ser nunca firmada en base a una suposición.
+
+<p>Basándose en las firmas existentes en una clave y en el &laquo;grado de
+confianza&raquo;, <tt/GnuPG/ determina la validez de las claves.  El grado de
+confianza (<em/Ownertrust/) es un valor que el propietario de una clave usa
+para determinar el nivel de confianza para una cierta clave.  Estos valores 
+son:
+
+<itemize>
+<item>1 = Don't know (No sé, no conozco)
+<item>2 = I do NOT trust (Confianza nula)
+<item>3 = I trust marginally (Confianza marginal)
+<item>4 = I trust fully (Confianza plena)
+</itemize>
+
+Si el usuario no se fía de una firma puede indicarlo así, y rechazar la 
+confianza en ésta.  La información sobre la confianza no se guarda en el 
+mismo fichero que el de las claves, sino en otro diferente.
+
+<sect>Codificar y Descodificar
+
+<p>Después de haber instalado y configurado todo tal y como queríamos, podemos 
+comenzar a cifrar y descifrar datos.
+
+<p>Es posible que cuando estemos cifrando o descifrando un documento, tengamos 
+más de una clave privada en nuestro anillo de claves privadas.  Si esto es así, 
+es necesario seleccionar una de ellas como activa.  Para ello se puede usar la 
+opción 
+
+<tscreen><code>
+-u UID
+</code></tscreen>
+
+o bien la opción
+
+<tscreen><code>
+--local-user UID
+</code></tscreen>
+
+También podemos agregar la siguiente línea en el fichero de configuración 
+<tt>$HOME/.gnupg/options</tt>:
+
+<tscreen><code>
+default-key UID
+</code></tscreen>
+
+Si se desea indicar el UID de un destinatario para cifrar un fichero con su 
+clave, se puede hacerse con la opción
+
+<tscreen><code>
+-r
+</code></tscreen>
+
+o la opción
+
+<tscreen><code>
+--recipient
+</code></tscreen>
+
+<sect1>Codificar
+
+<p>La orden para cifrar es la siguiente:
+
+<tscreen><code>
+$ gpg -e [fichero]
+</code></tscreen>
+
+ó
+
+<tscreen><code>
+$ gpg --encrypt [fichero]
+</code></tscreen>
+
+Estas órdenes cifrarían un fichero con la clave que hayamos definido por 
+defecto en el fichero de configuración <tt/options/.  Para cifrar un fichero 
+con la clave de otro usuario:
+
+<tscreen><code>
+$ gpg -er Destinatario [fichero]
+</code></tscreen>
+
+Pero como ya hemos comentado anteriormente esto produciría un criptograma con 
+el nombre de <tt/fichero.gpg/;  se puede añadir la opción
+
+<tscreen><code>
+--armor
+</code></tscreen>
+
+para que el criptograma sea del tipo 7-bit ASCII:
+
+<tscreen><code>
+$ gpg -a -er Destinatario [fichero]
+</code></tscreen>
+
+que producirá un criptograma con la extensión <tt/fichero.asc/.  Ya que los 
+mensajes, ficheros, y otro tipo de datos que enviamos codificados van cifrdos 
+con la clave del destinatario, existe el riesgo de que alguien lo haga 
+suplantando nuestra identidad.  Para evitar esto basta con firmar digitalmente 
+todo lo que se cifre (ver <ref id="firmas" name="Firmas">).
+
+
+<sect1>Descodificar
+
+<p>El comando para descifrar es:
+
+<tscreen><code>
+$ gpg [-d] [fichero]
+</code></tscreen>
+
+ó
+
+<tscreen><code>
+$ gpg [--decrypt] [fichero]
+</code></tscreen>
+
+En este caso no es necesaria la opción, es opcional, ya que la orden <tt/gpg/ 
+usa por defecto la opción
+
+<tscreen><code>
+--decrypt.
+</code></tscreen>
+
+En todos los casos que hemos nombrado aquí el resultado está direccionado a 
+<tt/stdout/, pero puede ser redireccionado con la opción
+
+<tscreen><code>
+-o [fichero]
+</code></tscreen>
+
+a un fichero con cualquier otro nombre.
+
+
+<sect>GnuPG + PGP
+
+<p>Al ser <tt/PGP/ un programa más antiguo que <tt/GnuPG/, es normal que un 
+nuevo usuario de <tt/GnuPG/ tenga ya instalado alguna versión de <tt/PGP/ en 
+su sistema, y que desee mantener sus viejas claves después de actualizarse a 
+<tt/GnuPG/.  Pues bien, no sólo es posible importar el contenido de los anillos
+de claves sino que, alternativamente, es posible que <tt/GnuPG/ gestione los 
+anillos de claves de <tt/PGP 2.6.3/ y <tt/PGP 5.0/.
+
+<p>Hay otros &laquo;problemas&raquo; de compatibilidad sobre los que también 
+trataremos en este capítulo, como son las firmas de tipo <bf/V4/ generadas por
+<tt/GnuPG/, o el uso por parte de <tt/PGP/ de los algoritmos propietarios 
+<tt/RSA/ o<tt/IDEA/.  Empezaremos por esto último.
+
+<sect1>Uso de Algoritmos <em/no libres/
+
+<p>El uso de algoritmos con patentes restrictivas por parte de <tt/PGP/ 
+representa un problema en tanto en cuanto la filosofía en torno a <tt/GnuPG/ 
+es la de implementar un sistema criptográfico libre.  Así pues, las patentes 
+sobre estos algoritmos imposibilitan una implementación total.  Pero <tt/GnuPG/
+también pretende cumplir con las reglas de los &laquo;estándares&raquo; de 
+<htmlurl url="http://www.d.shuttle.de/isil/gnupg/rfc2440.html" name="OpenPGP">.
+
+<p>Existen unas extensiones para <htmlurl url="http://www.rsa.com/"
+name="RSA"> e <htmlurl url="http://www.ascom.ch/" name="IDEA"> que pueden ser 
+instaladas y que permiten cierto uso de estos algoritmos.  Las claves 
+generadas por <tt/PGP 2.6.x/ son del tipo <tt/RSA/, y el algoritmo de cifrado 
+que usa es <tt/IDEA/ (también puede ser usado por <tt/PGP 5.x/).  Es posible 
+conseguir el código fuente de estos algoritmos en los ficheros 
+<htmlurl url="ftp://ftp.guug.de/pub/gcrypt/contrib/rsa.c.Z" name="rsa.c"> e 
+<htmlurl url="ftp://ftp.guug.de/pub/gcrypt/contrib/idea.c.Z" name="idea.c">.
+
+<p>También existen los binarios instalables de estas extensiones para algunas
+distribuciones de <htmlurl url="http://www.debian.org" name="Linux">, como
+<htmlurl url="http://www.debian.org" name="Debian"> (comprobar para otras 
+distribuciones).
+
+<sect1>Firma Digital con GnuPG<label id="firmas">
+
+<p><tt/GnuPG/ es el único sistema capaz de implementar firmas digitales <bf/V4/
+(de acuerdo con <em/OpenPGP/) y esta es la opción por defecto, pero en este
+caso <tt/PGP/ no es capaz de verificarlas.  Es posible obligar a <tt/GnuPG/ a
+usar <bf/V3/, de dos modos:
+
+<itemize>
+<item>Indicarlo en el fichero de configuración <tt>$HOME/.gnupg/options</tt>
+añadiendo la línea:
+</itemize>
+
+<tscreen><code>
+force-v3-sigs
+</code></tscreen>
+
+<itemize>
+<item>Indicar esta opción cada vez que se desee firmar un mensaje en <bf/V3/:
+</itemize>
+
+<tscreen><code>
+$ gpg &lt;opción&gt; --force-v3-sigs [fichero]
+</code></tscreen>
+
+<sect1>Importar Anillos de Claves de PGP a GnuPG
+
+<p>Intentaremos explicar cómo exportar las claves públicas y privadas desde
+nuestros anillos de claves <tt/PGP/ a los anillos de claves <tt/GnuPG/.
+
+<p><bf>NOTA: este método se ha extraído del <htmlurl url="http://technocage.com/~caskey/gpg/pgp2gnupgp.html" name="PGP2GnuPG"> Howto de Caskey L.  Dickson y 
+no lo he probado personalmente.  La última actualización del 
+&laquo;PGP2GnuPG Howto&raquo; data del data de Diciembre de 1998.  Por ello, y 
+para poder integrar <tt/PGP/ con <tt/GnuPG/, recomiendo el uso del método que 
+se explica en la <ref id="anillos" name="siguiente sección"> por ser más 
+sencillo y fiable.</bf>
+
+<p>Suponiendo que tengamos instaladas las dos versiones de <tt/PGP/ para
+<tt>Unix/Linux</tt>, tenemos pues sus respectivos anillos de claves públicas
+y privadas en <tt>$HOME/.pgp/</tt>:
+
+<itemize>
+<item>pubring.pgp -&gt; fichero de claves públicas de <tt/PGP 2.6.x/
+<item>secring.pgp -&gt; fichero de claves privadas de <tt/PGP 2.6.x/
+<item>pubring.pkr -&gt; fichero de claves públicas de <tt/PGP  5.x/
+<item>secring.skr -&gt; fichero de claves privadas de <tt/PGP  5.x/
+</itemize>
+
+A continuación usaríamos las órdenes que correspondan a cada versión para 
+extraer la(s) clave(s) que deseemos.
+
+<p>Así, para extraer una clave de <tt/PGP 2.6.x/:
+
+<tscreen><code>
+$ pgp -kx UID fichero anillo
+</code></tscreen>
+
+vg.:
+
+<tscreen><code>
+$ pgp -kx Pepe clavepepe2 ~/.pgp/pubring.pgp
+</code></tscreen>
+
+Esta operación nos daría el fichero clavepepe2.pgp.  Para extraer nuestra 
+clave privada, no tendríamos más que indicar nuestro UID y el fichero de las 
+claves secretas <tt>~/.pgp/secring.pgp</tt>.  No me consta que haya modo 
+alguno de indicar más de un UID con <tt/PGP 2.6.3/, si sabéis de alguno, por 
+favor enviadme un <htmlurl url="mailto:homega@ciberia.es" name="mensaje">.
+
+<p>Una vez extraída la clave sólo queda importarla al fichero de <tt/GnuPG/:
+
+<tscreen><code>
+$ gpg --import clavepepe2
+</code></tscreen>
+
+Para extraer una clave de <tt/PGP 5.0/:
+
+<tscreen><code>
+$ pgpk -x UID -o fichero
+</code></tscreen>
+
+vg.:
+
+<tscreen><code>
+$ pgpk -x Pepe -o clavepepe5
+</code></tscreen>
+
+En este caso, el fichero por defecto es el de las claves públicas, y 
+obtendríamos el fichero clavepepe5 como hemos indicado.
+
+<p>Una vez más, sólo queda importar la clave:
+
+<tscreen><code>
+$ gpg --import clavepepe5
+</code></tscreen>
+
+Ya que <tt/PGP 5.0/ no nos permite indicarle el fichero sobre el que queremos 
+operar, la extracción de la clave secreta se complica algo.  La solución viene 
+dada por un sistema superior como GnuPG:
+
+<p>Este procedimiento pone en riesgo la clave secreta durante un breve 
+periodo de tiempo, así que no debería ser usado en un sistema multiusuario o
+público.  Los pasos a seguir son:
+
+<itemize>
+<item>Extraer la clave pública correspondiente a la clave privada que queremos 
+exportar, e importarla a <tt/GnuPG/.
+<item>¡¡¡Borrar la contraseña de la clave secreta!!! (se recomienda hacer una
+copia de seguridad del fichero secring.skr):
+</itemize>
+
+<tscreen><code>
+$ pgpk -e UID
+</code></tscreen>
+
+vg.:
+
+<tscreen><verb>
+$ pgpk -e 0x614DB9FA
+
+sec  1024 0x614DB9FA 1998-03-22 ---------- DSS        Sign & Encrypt
+
+sub  1024 0x2B9E0571 1998-03-22 ---------- Diffie-Hellman
+
+uid  Horacio &lt;homega@vlc.servicom.es&gt;
+
+uid  Horacio &lt;homega@correo.com&gt;
+
+
+1024 bits, Key ID 0x614DB9FA, created 1998-03-22
+
+"Horacio &lt;homega@vlc.servicom.es&gt;"
+
+"Horacio &lt;homega@correo.com&gt;"
+</verb></tscreen>
+
+<tscreen><verb>
+Do you want to unset this key as axiomatic [y/N]? N
+
+Do you want to unset this key as axiomatic [y/N]? N
+
+Do you want to add a new user ID [y/N]? N
+
+Do you want to change your pass phrase (y/N)? Y
+Need old passphrase. Enter pass phrase: &lt;introducir contraseña&gt;
+Need new passphrase. Enter pass phrase: &lt;dejar vacío&gt;
+Enter it a second time. Enter pass phrase: &lt;dejar vacío&gt;
+Changing master key passphrase...
+
+Changing subkey passphrase...
+
+Do want to set this as your default key [y/N]? N
+
+Keyrings updated.
+</verb></tscreen>
+
+<itemize>
+<item>El paso siguiente será exportar la clave privada.  Como ya hemos podido 
+ver, <tt/PGP 5.0/ es incapaz de hacer esto, así que usaremos <tt/GnuPG/:
+</itemize>
+
+<tscreen><code>
+$ gpg --export-secret-keys --secret-key-ring ~/.pgp/secring.skr 0x614DB9FA &gt; miclave
+</code></tscreen>
+
+Todo esto en una una sola línea, y se creará el fichero <tt/miclave/.
+
+<itemize>
+<item>Ahora ya podemos importar la clave secreta a GnuPG:
+</itemize>
+
+<tscreen><code>
+$ gpg --import &lt; miclave
+</code></tscreen>
+
+Acto seguido volveremos a introducir una contraseña a la clave desde 
+<tt/GnuPG/.
+
+<sect1>Usar Anillos de Claves de PGP con GnuPG<label id="anillos">
+
+<p>Es posible evitar todo lo anterior, manteniendo instaladas las diferentes 
+versiones de <tt/PGP/ al mismo tiempo que la de <tt/GnuPG/.  Siendo 
+<tt/GnuPG/ un sistema superior y más nuevo, puede reconocer los anillos de 
+claves de <tt/PGP/ como propios.
+
+<p>En el caso de <tt/PGP 5.0/, basta con añadir el camino completo a los
+ficheros de claves de <tt/PGP 5.0/, precedido por <tt/keyring/ o 
+<tt/secret-keyring/, al final del fichero 
+<tt>~/.gnupg/options</tt> según corresponda:
+
+<tscreen><code>
+keyring ~/.pgp/pubring.pkr
+secret-keyring ~/.pgp/secring.skr
+</code></tscreen>
+
+Los ficheros de claves de <tt/PGP 2.6.3/ son reconocidos por <tt/GnuPG/ por
+defecto.  Si esto no fuera así, bastaría con repetir la misma operación
+anterior adaptándola a las circunstancias:
+
+<tscreen><code>
+keyring ~/.pgp/pubring.pgp
+secret-keyring ~/.pgp/secring.pgp
+</code></tscreen>
+
+Si a continuación hacemos un listado de las claves públicas con <tt/GnuPG/,
+observaremos que lee los tres ficheros, <tt>~/.gnupg/pubring.gpg</tt>,
+<tt>~/.pgp/pubring.pkr</tt>, y <tt>~/pubring.pgp</tt>:
+
+<tscreen><verb>
+$ gpg --list-keys
+
+     /home/usuario/.gnupg/pubring.gpg
+     --------------------------------
+     pub 1024D/57548DCD 1998-07-07 Werner Koch (gnupg sig)
+     &lt;dd9jn@gnu.org&gt;
+     pub 1024D/A95AF46C 1998-11-29 Brenno J.S.A.A.F. de Winter
+     &lt;brenno@dewinter.com&gt;
+     sub 3072g/A3CA62A0 1998-11-29
+
+   (... y demás claves públicas DSA/ElGamal...)
+
+     /home/usuario/.pgp/pubring.pkr
+     ------------------------------
+     pub 1024D/FAEBD5FC 1997-04-07 Philip R. Zimmermann &lt;prz@pgp.com&gt;
+     sub 2048g/42F0A0A0 1997-04-07
+
+   (... etc DSS/Diffie-Helman...)
+
+     /home/usuario/.pgp/pubring.pgp
+     ------------------------------
+     pub 1024R/88A17FF5 1995-09-11 IRIS-CERT, Spain
+
+   (... etc RSA...)
+
+</verb></tscreen>
+
+Lo mismo sucedería con las claves privadas:
+
+<tscreen><verb>
+$ gpg --list-secret-keys
+
+     /home/horacio/.gnupg/secring.gpg
+     --------------------------------
+     sec 1024D/42337AE6 1999-03-14 Horacio (comentario)
+     &lt;homega@vlc.servicom.es&gt;
+     ssb 2048g/1F177864 1999-03-14
+
+     /home/horacio/.pgp/secring.skr
+     ------------------------------
+     sec 1024D/7992AB40 1998-05-04 Horacio &lt;homega@vlc.servicom.es&gt;
+     uid Horacio &lt;homega@correo.com&gt;
+     ssb 2048g/917366AE 1998-05-04
+
+     /home/horacio/.pgp/secring.pgp
+     ------------------------------
+     sec 1024R/32D4A925 1997-09-23 Horacio &lt;homega@vlc.servicom.es&gt;
+</verb></tscreen>
+
+<sect>Firmar y Verificar<label id="fyv">
+
+<p>Firmar y verificar firmas es una parte importante de los sistemas de
+criptografía de clave pública.  El usuario puede firmar una serie de datos o
+un documento en varios modos, para lo que usa su propia clave privada.  Para
+verificar las firmas de otros usuarios, es necesario poseer previamente las
+claves públicas de éstos.
+
+<sect1>Firmar
+
+<p>Para firmar un fichero con la clave propia se usa la orden
+
+<tscreen><code>
+$ gpg -s [fichero]
+</code></tscreen>
+
+ó
+
+<tscreen><code>
+$ gpg --sign [fichero]
+</code></tscreen>
+
+Esta orden, además de producir una firma digital, también comprime el
+fichero, por lo que el resultado es un fichero de tipo binario (y por tanto
+ilegible).  Para producir un fichero firmado legible (ascii), se usa la
+orden
+
+<tscreen><code>
+$ gpg --clearsign [fichero]
+</code></tscreen>
+
+De este modo, tanto la firma como los datos firmados, son legibles con un
+editor.
+
+Cuando queramos que la firma aparezca en un fichero separado, sobre todo 
+cuando se trata de firmar un fichero binario, como por ejemplo un archivo 
+comprimido, o un ejecutable, usaremos la orden
+
+<tscreen><code>
+$ gpg -b [fichero]
+</code></tscreen>
+
+ó
+
+<tscreen><code>
+$ gpg --detach-sign [fichero]
+</code></tscreen>
+
+Este es el modo que MIME/PGP usa para firmar los mensajes del correo 
+electrónico.  Este modo es muy útil cuando tengamos que firmar un binario,
+por ejemplo, para distribuirlo, ya que la firma se basa en el binario pero va
+en un fichero aparte.  La opción <tt/--armor/ también puede ser de utilidad 
+en estos casos.
+
+A menudo debemos cifrar y firmar un fichero a un tiempo. La orden que 
+usaríamos en este caso sería
+
+<tscreen><code>
+$ gpg [-u Remitente] [-r Destinatario] [--armor] --sign --encrypt [fichero]
+</code></tscreen>
+
+La funcionalidad de las opciones <tt/-u (--local-user)/ y
+<tt/-r (--recipient)/ es la que se ha descrito ya anteriormente.
+
+<sect1>Verificar
+
+<p>Al descifrar un criptograma que también haya sido firmado digitalmente, 
+la firma es verificada automáticamente.  En todo caso es posible verificar 
+la firma simplemente con la orden
+
+<tscreen><code>
+$ gpg [--verify] [fichero]
+</code></tscreen>
+
+<sect>Fuentes de Información<label id="font">
+
+<sect1>GnuPG
+
+<p>
+<itemize>
+<item><htmlurl url="http://www.gnupg.org/" name="Página Principal de GnuPG"> (en inglés)
+<item><htmlurl url="http://www.gnupg.org/docs.html" name="Archivos de la lista de correo de GnuPG"> (en inglés)
+<item>La información contenida en el paquete de instalación y/o de fuentes, 
+sobre todo:
+</itemize>
+
+<tscreen><code>
+$ gpg --help
+</code></tscreen>
+
+<sect1>PGP
+
+<p><tt/PGP/ es el programa de cripto más antiguo y, de momento, más extendido.
+Se ha escrito mucha documentación en torno a <tt/PGP/.  Mucha de esta 
+información se puede usar para entender mejor el funcionamiento de <tt/GnuPG/.
+
+<itemize>
+<item><htmlurl url="http://www.pgpi.com/" name="Página Internacional de PGP">. 
+Desde aquí es posible acceder a mucha información sobre <tt/PGP/ en varias 
+lenguas (aunque principalmente en inglés).
+<item><htmlurl url="http://www.hertreg.ac.uk/ss/pgpfaq.html" 
+name="PGP DH vs. RSA FAQ">. Preguntas y respuestas sobre las diferencias
+entre los algoritmos &dquot;Diffie-Hellman&dquot; y &dquot;RSA&dquot;.
+</itemize>
+
+<sect1>Recursos en Castellano
+
+<p>Existen multitud de recursos en la red para hispanohablantes.  Aquí
+nombraremos un par de ellos desde los que podremos acceder a muchos otros:
+
+<itemize>
+<item>Página del boletín electrónico sobre seguridad <htmlurl url="http://www.kriptopolis.com" name="Kriptópolis">.
+<item>Páginas sobre PGP de <htmlurl url="http://www.rediris.es/pgp/" name="RedIris">
+</itemize>
+
+<sect1>Servidores de Claves
+
+<p>
+<itemize>
+<item><htmlurl url="http://www.keyserver.net/" name="Keyserver Net">
+<item><htmlurl url="http://wwwkeys.eu.pgp.net/" name="http://wwwkeys.eu.pgp.net/"
+<item><htmlurl url="http://www.rediris.es/cert/keyserver/" name="Servidor de RedIris">
+</itemize>
+
+<sect1>Libros
+
+<p>
+<itemize>
+<item><label id="BSchneier">B. Schneier, ``Applied Cryptography, 
+Second Edition'', Wiley, 1996&nl;
+Deutsche Ausgabe unter dem Titel ``Angewandte Kryptographie'',
+Addison-Wesley, 1996
+</itemize>
+
+
+<sect>Sobre este Documento
+
+<p>
+Copyright &copy; 1999 J.H. M.G. (versión en castellano)&nl;
+Copyright &copy; 1999 Brenno J.S.A.A.F. de Winter (versión en inglés)&nl;
+Copyright &copy; 1999 Michael Fischer v. Mollard (versión original en alemán)
+
+Este documento es documentación libre y puede ser redistribuido y/o modificado
+bajo los términos de la Licencia Pública GNU, según publicada por la Free
+Software Foundation en su versión 2 (u otra posterior).
+
+Este documento se distribuye esperando que pueda ser útil, pero SIN NINGUNA
+GARANTÍA.  Ver la "GNU Library General Public License" 
+(<htmlurl url="http://www.gnu.org/copyleft/gpl.html"
+name="http://www.gnu.org/copyleft/gpl.html">), o una traducción de ésta al
+castellano en <htmlurl url="http://visar.csustan.edu/~carlos/gpl-es.html" name="http://visar.csustan.edu/~carlos/gpl-es.html">, para obtener más detalles.
+
+Deberías haber recibido una copia de la "GNU Library General Public License"
+con la distribución del programa;  si no es así, puedes recibirla escribiendo
+a:
+
+<code>
+Free Software Foundation, Inc.
+59 Temple Place - Suite 330
+Boston, MA 02111-1307
+USA
+</code>
+
+<sect1>Versiones
+
+<p>Versión original en alemán: La <bf/versión 0.1/ fue la primera versión en
+alemán.
+
+Todos los cambios para la versión original, en alemán, están documentados 
+en un fichero diff: 
+<htmlurl url="http://www.stud.uni-goettingen.de/~s070674/GnuPGMiniHowto/"
+name="dieses Dokument">
+
+<itemize>
+<item><bf/English version 0.1.0/, del 30 de Mayo de 1999. Esta versión es una
+traducción de la versión alemana al inglés, con algunos cambios.
+<item><bf/Deutsche Version 0.1.1/
+<itemize>
+<item>Nueva sección &laquo;Límites en seguridad&raquo;
+<item>Mejorada la explicación sobre firmas
+<item>Varios cambios sugeridos por Werner Koch (¡gracias!)
+</itemize>
+<item><bf/Versión 0.1.2/, del 29 de Mayo de 1999 (Anno MMDCCLII ad Urbe condita).
+Esta versión en castellano es una traducción de la versión inglesa, y se han
+hecho algunos cambios. Se ha añadido el capítulo 5 sobre compatibilidad e
+interoperabilidad de <tt/GnuPG/ con <tt/PGP/.
+<item><bf/Versión 0.1.3/, del 28 de Septiembre de 1999. Reescrito a código
+SGML (LinuxDoc) desde el código HTML.  Corrección de algunos errores en
+castellano.
+</itemize>
+
+<bf/Notas para la versión española:/  Cualquier comentario o corrección al 
+documento que ayude a mejorarlo es bienvenido.  Por favor, enviad cualquier
+sugerencia a <htmlurl url="mailto:homega@ciberia.es" 
+name="&lt;homega@ciberia.es&gt;">.
+
+<bf/Notas para la versión inglesa:/  All remarks for this document can be send 
+to Brenno J.S.A.A.F. de Winter <htmlurl url="mailto:brenno@dewinter.com"
+name="&lt;brenno@dewinter.com&gt;">. Comments help us make a better document
+and are greatly appreciated.
+
+<bf/Notas para la versión alemana:/  Anregungen, Kritik, Verbesserungen und
+Erweiterungen einfach an Michael Fischer v. Mollard 
+<htmlurl url="mailto:fischer@math.uni-goettingen.de"
+name="&lt;fischer@math.uni-goettingen.de&gt;"> senden, damit dieses Dokument
+weiter verbessert werden kann.
+
+</article>

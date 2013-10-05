@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.7">
+ <TITLE>Gnu Privacy Guard (GnuPG) Mini Howto (swedish): Kryptering och avkryptering</TITLE>
+ <LINK HREF="GPGMiniHowto-5.html" REL=next>
+ <LINK HREF="GPGMiniHowto-3.html" REL=previous>
+ <LINK HREF="GPGMiniHowto.html#toc4" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="GPGMiniHowto-5.html">Nästa</A>
+<A HREF="GPGMiniHowto-3.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc4">Innehåll</A>
+<HR>
+<H2><A NAME="GPG-Minihowto-encrypt"></A> <A NAME="s4">4. Kryptering och avkryptering</A></H2>
+
+<P>Sedan installationen är avklarad är det dags att börja kryptera.
+<P>Vid kryptering eller avkryptering kan man inneha flera olika provata nycklar. I detta fall måste du välja en av dem. Detta kan göras genom modifieraren <CODE>-u UID</CODE> eller genom <CODE> --local-user UID</CODE>. Detta får standardnyckeln att bytas ut mot den specificerade nyckeln. Om du vill byta mottagare använder du <CODE>-r</CODE> eller <CODE>--recipient</CODE>.
+<P>
+<H2><A NAME="ss4.1">4.1 Kryptera</A>
+</H2>
+
+<P>
+<P>Kommandot för kryptering är:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg -e Mottagare [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+eller
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --encrypt Mottagare [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+För att undvika situationer där användare hävdar att de är en annan användare är det viktigt att signera alla krypterade meddelanden. Se 
+<A HREF="GPGMiniHowto-5.html#GPG-Minihowto-signatures">signaturer</A>.
+<P>
+<H2><A NAME="ss4.2">4.2 Avkryptera</A>
+</H2>
+
+<P>Kommandot för avkryptering eller avkodning är:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg [-d] [Meddelande] 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+eller
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg [--decrypt] [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Standardinställning för utmatning är också här <CODE>stdout</CODE> men kan ändras till en fil genom modifieraren <CODE>-o</CODE>
+<P>
+<HR>
+<A HREF="GPGMiniHowto-5.html">Nästa</A>
+<A HREF="GPGMiniHowto-3.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc4">Innehåll</A>
+</BODY>
+</HTML>

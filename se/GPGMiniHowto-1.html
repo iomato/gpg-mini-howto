@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.7">
+ <TITLE>Gnu Privacy Guard (GnuPG) Mini Howto (swedish): Koncept</TITLE>
+ <LINK HREF="GPGMiniHowto-2.html" REL=next>
+
+ <LINK HREF="GPGMiniHowto.html#toc1" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="GPGMiniHowto-2.html">Nästa</A>
+Föregående
+<A HREF="GPGMiniHowto.html#toc1">Innehåll</A>
+<HR>
+<H2><A NAME="GPG-Minihowto-Concept"></A> <A NAME="s1">1. Koncept</A></H2>
+
+<P>
+<P>
+<H2><A NAME="ss1.1">1.1 Krypton med kända nycklar (public key)</A>
+</H2>
+
+<P>
+<P>Klasiska krypton använder endast en nyckel för kryptering. Sändaren
+krypterar meddelandet med sin nyckel. För att kunna avkoda detta måste mottagaren
+ha samma nyckel. Denna nyckel måste ha givits till mottagaren på sådant sätt att 
+ingen obehörig har kunnat se nyckeln. Om någon annan får tag på nyckeln är denna
+kryptometod värdelös.
+<P>
+<P>Lösninge till detta ligger i användandet av så kallade kända nycklar (Public Keys).
+Public Keys är en metod som anväder två nycklar. Den ena nyckeln är en allmänt känd
+nyckel som kan spridas till vem som helst. Den andra nyckeln är en privat (eller hemlig)
+nyckel som inte får spridas. Denna nyckel kan bara användas av innehavaren. I ett bra 
+kryptosystem kan man inte lista ut den hemliga nyckeln från den kända nyckeln. 
+Sändaren kan nu kryptera ett meddelande med mottagarens kända nyckel. Mottagaren 
+avkodar meddelandet met hjälp av sin privata nyckel.
+<P>
+<P>Det är oerhört viktigt att den hemliga nyckeln förblir hemlig. Den får inte 
+ges till någon annan, och DU FÅR INTE SKICKA DEN ÖVER INTERNET. Det är också
+mycket riskabelt att använda GnuPG över en <CODE>telnet</CODE>-uppkoppling
+(telnet bör undvikas helt och hållet om man kräver hög säkerhet).
+<P>
+<H2><A NAME="ss1.2">1.2 Digitala signaturer</A>
+</H2>
+
+<P>
+<P>Som bevis på att ett meddelande verkligen sänts av den förmodade avsändaren, kan man 
+använda digitala signaturer. Som namnet antyder signerar avsändaren meddelandet med
+en digital signatur. Med hjälp av denna signatur kan man kontrollera om ett meddelande
+är "äkta". Detta minskar riskerna för trojanska hästar (ett meddelande som ger sig ut
+för att vara t.ex. en uppgradering för ett specifikt program, men i själva verket innehåller
+ett virus eller liknande). Det kan också användas som bevis för att information kommer
+från en tillförlitlig källa, och följaktligen kan ses som riktig.
+<P>
+<P>En digital signatur skapas genom en kombination av den hemliga nyckeln och texten
+i meddelandet. Genom att använda avsändarens kända nyckel kan meddelandet verifieras. 
+Man kan inte bara säkerställa att meddelandet kommer från sagd avsändare - man får
+också en kontroll av innehåller på köpet. Man vet att innehållet i meddelandet inte
+ändrats mellan avsändare och mottagare.
+<P>
+<H2><A NAME="ss1.3">1.3 Nät av tillit</A>
+</H2>
+
+<P>En svag länk i Public key algoritmen är spridandet av kända nycklar. En 
+användare kan sprida en känd nyckel under falsk identitet. Om ett meddelande
+krypteras med denna falska nyckel kan förfalskaren avkoda och läsa dessa
+meddelanden. Om förfalskaren sedan krypterar meddelandet med den riktiga (äkta)
+kända nyckeln och skickar det vidare till den riktiga mottagaren kan förfalskningen
+gå oupptäckt.
+<P>
+<P>Lösningen som används i PGP (och följaktligen i GnuPG) ligger i att signera nycklar.
+En känd nyckel kan signeras av andra användare. Denna signatur betyder att folk 
+vidimerar att den kända nyckeln faktiskt hör till den person nyckeln säger sig höra till.
+Det är sedan upp till användare av GnuPG att lita på signaturen. Man kan se en nyckel
+som pålitlig om man vet att nyckeln verkligen hör till den som säger sig ha sänt nyckeln
+Du kan bara lita på signaturen om du litar på den som signerat nyckeln. För att vara
+absolut säker på en nyckel måste man jämföra deras 'fingeravtryck' över någon säker kanal.
+<P>
+<H2><A NAME="ss1.4">1.4 Begränsningar av säkerhet</A>
+</H2>
+
+<P>
+<P>För att hålla hemlig information hemlig måste mer än bara krypteringsalgoritmen tas i beaktning.
+Systemets allmänna säkerhet måste också ses över. PGP ses som säkert, och
+i skrivande stund är det inte känt om någon har lyckats knäcka en PGP nyckel. Men det betyder inte
+alls att all krypterad information är säker (NSA skulle t.ex. inte publicera att de knäckt
+en kod, och inte en person med brottsliga avsikter heller). Men även om PGP är "ohackbart" finns 
+det andra metoder för att komma åt informationen. I februari upptäcktes en trojansk häst som 
+sökte på hårddisken efter hemliga nycklar, och sedan skickade dem till en annan server. Om dåliga
+lösenord används är det lätt att knäcka en nyckel.
+<P>
+<P>En annan möjlighet (omän mer avancerad) är att skicka tangentnedslag till en annan server.
+Det är också möjligt (men mycket svårt) att avläsa informationen på en bildskärm. På dessa vis 
+behöver man inte knäcka någon kod. För dessa eventualiteter krävs en bra och väl genomtänkt
+säkerhetsplan.
+<P>
+<P>Målet är inte att skapa paranoida användare, utan bara att påpeka att säkerhet är ett stort 
+och brett ämne. Det är viktigt att inse att kryptering bara är en bit i säkerhetsbilden. Trojanska
+hästar såsom Melissa-viruset i mars 1999 visar att många företag inte är förberedda för sådana
+attacker.
+<P>
+<HR>
+<A HREF="GPGMiniHowto-2.html">Nästa</A>
+Föregående
+<A HREF="GPGMiniHowto.html#toc1">Innehåll</A>
+</BODY>
+</HTML>

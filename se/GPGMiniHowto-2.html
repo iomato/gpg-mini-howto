@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.7">
+ <TITLE>Gnu Privacy Guard (GnuPG) Mini Howto (swedish): Installation </TITLE>
+ <LINK HREF="GPGMiniHowto-3.html" REL=next>
+ <LINK HREF="GPGMiniHowto-1.html" REL=previous>
+ <LINK HREF="GPGMiniHowto.html#toc2" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="GPGMiniHowto-3.html">Nästa</A>
+<A HREF="GPGMiniHowto-1.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc2">Innehåll</A>
+<HR>
+<H2><A NAME="s2">2. Installation </A></H2>
+
+<P>
+<H2><A NAME="ss2.1">2.1 Källor för GnuPG.</A>
+</H2>
+
+<P>
+<P>Den officiella nerladdningsplatsen är:
+<A HREF="http://www.gnupg.org/download.html">GnuPG Homepage</A>. 
+Här finns länkar till spegelservrar.
+<P>Det är olagligt att ladda ner GnuPG från servrar i USA. USA har exportlagar som
+förbjuder export av kryptografiska program. Det är därför PGP alltid kan laddas ner i 
+en internationell och en nationell (endast för USA) version. För den internationella
+versionen har källkoden exporterats i form av en bok. I Oslo har denna bok scannats in.
+Mer information om detta kan hittas på 
+<A HREF="http://www.pgpi.com">International PGP Homepage</A>. Den internationella versionen
+kan fritt importeras till USA så länge den inte exporteras utanför USA igen.
+<P>
+<P>Om en installerad version av GnuPG eller PGP redan finns, bör filernas signaturer 
+verifieras (se 
+<A HREF="GPGMiniHowto-5.html#GPG-Minihowto-signatures">Signaturer</A>).
+<P>
+<H2><A NAME="ss2.2">2.2 Konfiguration </A>
+</H2>
+
+<P>GnuPG kan laddas hem som ett Debian-paket, RPM-paket eller källkod. Paketen installerar
+binärfiler med alla nödvändiga verktyg för Linuxplattformen. Om GnuPG behövs för andra system
+måste källkoden laddas hem och kompileras manuellt. Det uppskattas om alternativa installationsmetoder
+görs tillgängliga för allmänheten. <I>(Övers. anm.: I skrivande stund finns det ett antal binära
+installationspaket för olika UNIXar på <A HREF="http://orbita.starmedia.com/~renato.martini/ing.html">denna</A> sida.)</I>
+<P>
+<P>Eftersom största utvecklingsarbetet gjorts under Linux (x86) borde det inte vara några problem
+att porta koden till andra system. Listan av system man vet funkar kan hittas på
+<A HREF="http://www.gnupg.org">GnuPG Homepage</A>. 
+Nedan beskriven procedur för installation av tar-packad fil är tämligen plattformsoberoende.
+<P>
+<P>
+<P>Packa up tar-filen med kommandot:
+<BLOCKQUOTE><CODE>
+<PRE>
+tar xvzf gnupg-?.?.?.tar.gz
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Efter detta, gå in i biblioteket som innehåller källkoden.
+Skriv sedan
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure
+</PRE>
+</CODE></BLOCKQUOTE>
+  
+<P>Med detta kommando händer ingenting speciellt. Med
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure --help
+</PRE>
+</CODE></BLOCKQUOTE>
+visas alla tillgängliga konfigurationsinställningar för kompilering. Om problem
+uppstår med t.ex. internationalisering (GETtext) kan man inkludera en version som
+finns med i källkoden genom att ange
+<CODE>--with-included-gettext</CODE> eller genom att slå av internationalisering: <CODE>--disable-NLS</CODE> option.
+<P>
+<H2><A NAME="ss2.3">2.3 Kompilering </A>
+</H2>
+
+<P>
+<P>Nu vill vi kompilera källkoden. Skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+make
+</PRE>
+</CODE></BLOCKQUOTE>
+ 
+Detta bör fungera utan problem. Om problem uppstår, följ dessa steg (i nämnd ordning): 
+Försök först lösa problemet själv (dokumentationen finns givetvis tillgänglig). Om inte
+det löser problemt, försäkra dig om att det inte är fråga om en känd bugg (konsultera
+buggfilen på http://www.gnupg.org). Sedan kan en bekant som är van att kompilera
+kod frågas. Sista steget är att skicka frågan till prenumerationslistan (se 
+<A HREF="GPGMiniHowto-6.html#GPG-Minihowto-Informationsources">Informationskällor</A>). Om
+problemet är relaterat till sökvägar, prova <CODE>make clean</CODE> följt av
+<CODE>configure</CODE> igen. Försök kompilera. Om detta inte fungerar är det dags att drabbas av
+panik.
+<P>
+<H2><A NAME="ss2.4">2.4 Installation</A>
+</H2>
+
+<P>
+<P>Skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+make install
+</PRE>
+</CODE></BLOCKQUOTE>
+
+för att kopiera binärerna och manualsidorna till sina respektive platser.
+Om ett installationsbibliotek inte specifierades med <CODE>./configure</CODE>
+kommer filerna att installeras under <CODE>usr/local/share/gnupg/</CODE>. Dessa
+inställningar kan hittas i <CODE>options.skel</CODE>. Ändringar i denna fil
+kommer att användas som standardvärden om filen kopierats till <CODE>
+~/.gnupg/options</CODE>. Alla möjligheter är väl dokumenterade, så de kommer
+inte att behandlas i detta dokument.
+<P>
+<P>GnuPG kan exekveras som suid root så att programmet har samma rättigheter som 
+superuser. På detta vis säkerställs att bara root kan läsa filer som hör till
+programmet. Eftersom programmet körs som superuser är alltid trojanska hästar en
+risk. En trojansk häst som körs som superuser kan helt och håller förstöra ett
+system bortom all hjälp. Om man inte vill köra GnuPG som superuser av denna orsak kan man
+slå av varningen <CODE>no-secmem-warning</CODE> i <CODE>~/gnupg/options</CODE>.
+<P>
+<P>
+<HR>
+<A HREF="GPGMiniHowto-3.html">Nästa</A>
+<A HREF="GPGMiniHowto-1.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc2">Innehåll</A>
+</BODY>
+</HTML>

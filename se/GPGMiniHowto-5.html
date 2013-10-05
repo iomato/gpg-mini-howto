@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.7">
+ <TITLE>Gnu Privacy Guard (GnuPG) Mini Howto (swedish): Signering och kontroll av signatur</TITLE>
+ <LINK HREF="GPGMiniHowto-6.html" REL=next>
+ <LINK HREF="GPGMiniHowto-4.html" REL=previous>
+ <LINK HREF="GPGMiniHowto.html#toc5" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="GPGMiniHowto-6.html">Nästa</A>
+<A HREF="GPGMiniHowto-4.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc5">Innehåll</A>
+<HR>
+<H2><A NAME="GPG-Minihowto-signatures"></A> <A NAME="s5">5. Signering och kontroll av signatur</A></H2>
+
+<P>
+<P>För att signera ett meddelande med egen nyckel, använd kommandot:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg -s [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+eller
+
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --sign [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Detta komprimerar också meddelandet så att det blir oläsbart. Om du vill ha ett läsbart meddelande efter signering, använd: 
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --clearsign [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+ 
+Detta säkerställer att meddelande är läsbart. Meddelandes signeras dock på samma sätt om ovan.
+<P>Med
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg -b [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+eller
+
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --detach-sign [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+ 
+skrivs signaturen i en separat fil. Detta är den rekommenderade metoden för att signera binära filer som t.ex. arkiv. Modifierararen <CODE>--armor</CODE> är också mycket användbar här.
+<P>
+<P>Det händer ofta att ett meddelande är både krypterat och signerat. Detta är kommandot för att uppnå det:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg [-u Avsändare] [-r Mottagare] [--armor] --sign --encrypt [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Funktionen av modifierarna <CODE>-u</CODE> (<CODE>--local-user</CODE>) och <CODE>-r</CODE> 
+(<CODE>--recipient</CODE>) är som beskrivits tidigare.
+<P>
+<P>När ett krypterat meddelande signeras kontrolleras alltid signaturen vid avkryptering. För att kontrollera signatur utan att avkryptera meddelande används:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg [--verify] [Meddelande]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Detta fungerar naturligtvis bara om avsändarens kända nyckel innehas.
+<P>
+<P>
+<HR>
+<A HREF="GPGMiniHowto-6.html">Nästa</A>
+<A HREF="GPGMiniHowto-4.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc5">Innehåll</A>
+</BODY>
+</HTML>

@@ -1,0 +1,807 @@
+<!doctype linuxdoc system>
+<article>
+
+<title>Gnu Privacy Guard (GnuPG) Mini Howto (Dutch)
+
+<author>Brenno J.S.A.A.F. de Winter (English) 
+<tt>&lt;brenno@dewinter.com&gt;</tt>
+
+Michael Fischer v. Mollard (German)
+<tt>&lt;fischer@math.uni-goettingen.de&gt;</tt>
+
+Arjen Baart (Dutch)
+<tt>&lt;arjen@andromeda.nl&gt;</tt>
+
+<date>Versie 0.1.3: 17 Mei, 2002
+
+<abstract>
+  Dit document legt in het kort uit hoe je de GNU Privacy Guard (GnuPG)
+  kunt gebruiken. GnuPG is een Open Source encryptie systeem, compatibel
+  met OpenPGP.
+  om het vrije gebruik van dit programma te waarborgen is het gebruik
+  van het RSA en andere gepatenteerde algoritmes vermeden.
+  Het originele document is geschreven door Michael Fischer v. Mollar
+  in het Duits. De tekst is vertaald en op een aantal punten aangepast.
+</abstract>
+
+<toc>
+
+<sect>Concepten<label id="GPG-Minihowto-Concept">
+<p>
+<#if output=latex2e> 
+<em><bf>Opmerking voor gedrukte versies:</bf> Door een technische onvolkomenheid
+    in verband met een dubbel streepje, zoals gebruikt in de lange opties
+    van GnuPG, wordt dit in de lopende tekst als een enkel streepje weergegeven.
+    Lees daarom bij lange opties altijd een <bf>dubbel</bf> streepje.
+  </em> 
+</#if>
+</p>
+
+<sect1>Publieke Sleutel Encryptie
+<p>
+
+Klassieke encryptie methoden gebruiken slechts een (1) sleutel voor de encryptie.
+De verzender versleutelt de boodschap met deze ene sleutel.
+Om de boodschap weer te ontsleutelen heeft de ontvanger de zelfde sleutel nodig.
+De sleutel moet dan op een dusdanige wijze aan de ontvanger zijn gegeven
+dat anderen niet de gelegenheid hebben gehad om de sleutel te pakken te krijgen.
+Als een derde partij ook de sleutel heeft, is deze methode van encryptie onbruikbaar.
+
+<p>
+Dit probleem wordt opgelost door het gebruik van Publieke Sleutels.
+In het Publieke Sleutel concept worden twee sleutels gebruikt.
+Een sleutel is de Publieke Sleutel die op allerlei manieren verspreid wordt
+en die iedereen in zijn bezit mag hebben.
+De andere sleutel is de Prive Sleutel.
+Deze sleutel is geheim en mag niet verspreid worden. Alleen de eigenaar
+is in het bezit van de Prive Sleutel.
+In een goed ontworpen encryptie systeem kan de geheime sleutel niet
+van de publieke sleutel afgeleid worden.
+De verzender versleutelt nu de boodschap met de publieke sleutel van de ontvanger.
+Het ontsleutelen is dan alleen mogelijk met de gehieme sleutel van de ontvanger.
+
+<p>
+Cruciaal in dit concept is dat de geheime sleutel ook werkelijk geheim blijft
+en niet in het bezit komt van iemand anders dan de eigenaar van deze sleutel.
+JE MAG DEZE SLEUTEL NOOIT OVER HET INTERNET VERSTUREN.
+Het is dan ook niet aan te bevelen om GnuPG met een <tt>telnet</tt> verbinding
+te gebruiken.
+
+<sect1>Digitale Handtekeningen
+<p>
+Om te bewijzen dat een boodschap daadwerkelijk is verzonden door degene
+die beweert de boodschap verzonden te hebben is het concept van
+de Digital Handtekening uitgevonden.
+Zoals de naam suggereert, is een boodschap door de verzender ondertekend
+met een digitale handtekening.
+Met deze handtekening kun je de autenticiteit van de boodschap controleren.
+Hiermee is het risico voor Trojaanse paarden (een boodschap die beweert een
+oplossing voor een bepaald probleem te beiden maar in werkelijkheid een
+virus bevat of anderszins schade aanricht) te reduceren.
+Ook kan geverifieerd worden of informatie van een legitieme bron
+vandaan komt en als waarheid aangenomen kan worden.
+
+<p>
+
+Een digitale handtekening wordt gemaakt door een combinatie van de geheime
+sleutel en de tekst.
+De boodschap kan geverifieerd worden met de publieke sleutel van de verzender.
+Niet alleen wordt gecontroleerd of de verzender correct is, ook de inhoud
+van de boodschap wordt gecontroleerd.
+Je bent dan niet alleen zeker van de verzender, maar je ziet ook of de
+informatie onderweg niet veranderd is.
+
+<sect1>Web van vertrouwen
+<p>
+Een zwak punt in de Publieke Sleutel methoden is de verspreiding van
+de publieke sleutels.
+Iemand zou een publieke sleutel met een valse gebruiker identificatie
+in omloop kunnen brengen.
+Als een boodschap met deze sleutel gemaakt wordt, dan kan de indringer
+die boodschap decoderen en lezen.
+Als de indringer vervolgens de boodschap doorgeeft, versleuteld met de
+echte publieke sleutel van de bedoelde ontvanger, is deze aanval
+redelijk onopvallend.
+
+<p>
+De oplossing in PGP (en daarmee automatisch in GnuPG), bestaat uit
+het signeren van sleutels.
+Een publieke sleutel kan gesigneerd worden door andere personen.
+Een dergelijke handtekening bevestigt dat de sleutel, gebruikt door
+de UID (Gebruiker Identifikatie) inderdaad toebehoort aan de persoon
+waar deze beweert aan toe te behoren.
+Het is dan aan de gebruiker van GnuPG om aan te geven hoever het
+vertrouwen in die handtekening gaat.
+Je kunt een sleutel als vertrouwenswaardig beschouwen wanneer je de verzender
+van de sleutel vertrouwt en zeker weet dat de sleutel inderdaad bij die
+persoon hoort.
+Alleen wanneer je de sleutel van de persoon die de sleutel gesigneerd
+heeft vertrouwt, kun je de handtekening vertrouwen.
+Om absolute zekerheid te hebben dat een sleutel correct is, moet je
+de 'fingerprint' via een betrouwbare weg controleren voordat je een
+sleutel als vertrouwenswaardig beschouwt.
+
+<sect1>Grenzen aan beveiliging
+<p>
+Wanneer je informatie vertrouwelijk wilt houden is er meer nodig dan alleen
+een versleutel algoritme te kiezen.
+Je moet dan ook nadenken over de systeem beveiliging in het algemeen.
+Over het algemeen is PGP als veilig te beschouwen en op dit moment zijn er
+geen incidenten bekend van het kraken van PGP.
+Dat betekent echter niet dat alle versleuteling absoluut veilig is
+( de NSA, bij voorbeeld, zal het niet aan de grote klok hangen als ze
+op een of andere manier PGP gekraakt hebben).
+Maar ook al zou PGP volledig onkraakbaar zijn, dan zijn er nog andere
+methoden denkbaar om de beveiliging te doorbreken.
+In februari 1999 is er een Trojaans paard gevonden wat zocht naar geheime
+PGP sleutels op de harddisk en ze met FTP weg stuurde.
+Als de wachtwoorden onhandig gekozen zijn, kan een geheime sleutel vrij
+eenvoudig achterhaald worden.
+
+<p>
+Een andere technische mogelijkheid is een Trojaans paard dat toetsaanslagen
+doorstuurt.
+Ook is het mogelijk, alhoewel zeer moeilijk, om de inhoud van het beeldscherm
+door te geven aan iemand die afluistert.
+Het is dan niet eens nodig om gecodeerde boodschappen te kraken.
+Tegen al deze risico's is het nodig om een goed beveiligingsplan te hebben
+en ook uit te voeren.
+
+<p>
+Het is niet de bedoeling om onrust te zaaien, maar wel om duidelijk te maken
+dat er veel moet gebeuren om een goede beveiliging van gegevens te realizeren.
+Het is belangrijk om op te merken dat encryptie slechts een enkele stap is
+om de beveiliging te verhogen maar niet de totale oplossing kan vormen.
+Trojaanse paarden zoals die verschenen met het Melissa virus in maart 1999
+bewezen dat veel bedrijven daar niet op voorbereid zijn.
+
+<sect>Installatie
+<p>
+<sect1>Bronnen voor GnuPG.
+<p>
+
+De officiele download site is:
+<url url="http://www.gnupg.org/download.html" name="GnuPG Homepage">. 
+Daar zijn ook links naar mirror sites te vinden.
+
+Vanwege juridische beperkingen is het niet teogestaan om GnuPG te downloaden
+van servers in de USA.
+De USA legt export beperkingen op aan cryptografische software.
+Daarom is PGP altijd beschikbaar in een internationale en een
+nationale (voor de USA) versie.
+Voor de internationale versie van de software is de source code geexporteerd
+in afgedrukte vorm, als een boek.
+Deze versie is in Europa (Oslo) gescand.
+Meer informatie hierover is te vinden op
+<url url="http://www.pgpi.com" name="Internationale PGP Homepage">.
+De internationale versie mag wel in de USA geimporteerd worden maar
+mag daarna niet meer geexporteerd worden.
+
+<p>
+Als je al een versie van PGP of GnuPG geinstalleerd hebt, doe je er
+natuurlijk verstandig aan de handtekening van de file te controleren
+(zie <ref id="GPG-Minihowto-signatures" name="Handtekeningen">).
+
+<sect1>Configuratie
+<p>
+GnuPG is verkrijgbaar als een Debian pakket, een RPM pakket
+(Redhat Package Manager) of in source code.
+Met de nieuwste Redhat distributies wordt GnuPG meegeleverd.
+Gebruik dit commando om te controleren of GnuPG op je systeem is geinstalleerd:
+
+<tscreen><verb>rpm -q gnupg</verb></tscreen>  
+
+De paketten zijn geinstalleerd als binaire files voor Linux.
+Wanneer je GnuPG voor een ander platform nodig hebt, zul je
+het zelf moeten compileren.
+Het wordt dan natuurlijk gewaardeerd als je installatie methoden
+voor een ander platform aan het publiek beschikbaar stelt.
+<p>
+
+Aangezien de ontwikkeling voor het leeuwendeel op Linux (x86) plaats
+vindt, is de vertaling naar andere systemen vaak wat problematisch.
+De actuele lijst van operating systems die GnuPG ondersteunen is
+te vinden op de
+ <htmlurl url="http://www.gnupg.org" name="GnuPG Homepage">. 
+Hieronder is een methode beschreven om GnuPG vanuit een source tar-ball
+te installeren.
+Deze methode is redelijk platform onafhankelijk.
+ 
+<p>
+Pak de tar-ball uit met het commando:
+<tscreen><verb>tar xvzf gnupg-?.?.?.tar.gz</verb></tscreen>
+
+Ga na het uitpakken naar de directory waar de source code in staat.
+Type dan:
+
+<tscreen><verb>./configure</verb></tscreen>  
+
+Hierbij zou niets bijzonders moeten gebeuren. Met
+
+<tscreen><verb>./configure --help</verb></tscreen>
+
+kun je de beschikbare opties voor het compileren bekijken.
+Als er problemen optreden die betrekking hebben op de internationalisatie
+(GET text), kun je een versie gebruiken die met de source code meegeleverd
+wordt door middel van de <tt>--with-included-gettext</tt> optie
+of dit uitschakelen door de <tt>--disable-NLS</tt> optie te gebruiken.
+
+<sect1>Compileren 
+<p>
+
+Hierna kunnen we de boel compileren door
+<tscreen><verb>make</verb></tscreen> 
+in te typen.
+Dit zou zonder problemen moeten werken.
+Mochten zich toch problemen voordoen, onderneem dan de volgende stappen
+(in de aangegeven volgorde):
+Probeer eerst zelf het probleem op te lossen (uiteraard door de beschikbare
+documentatie te raadplegen).
+Onderzoek dan of je probleem niet een bekende bug is
+(lees de BUGS file op http://www.gnupg.org).
+Vraag het vervolgens aan een bekende.
+Als je met deze stappen het probleem niet opgelost krijgt, stel dan een
+vraag op de GnuPG mailing list
+(zie <ref id="GPG-Minihowto-Informationsources" name="Informatiebronnen">).
+Als het probleem te maken heeft met directory paden, probeer dan een
+<tt>make clean</tt>, daarna <tt>configure</tt> en probeer opnieuw
+te compileren.
+Werkt dat ook niet, dan is het tijd om paniek te zaaien.
+ 
+<sect1>Installatie
+<p>
+
+Type nu:
+<tscreen><verb>make install</verb></tscreen>
+Om het programma en de man-pages naar de installatie directory te copieren.
+Als je de installatie directory bij ./configure niet veranderd hebt
+is <tt>/usr/local/share/gnupg/</tt> de directory waar GnuPG geinstalleerd wordt.
+Je kunt deze directory vinden in de file <tt>options.skel</tt>.
+
+<p>
+Je kunt GnuPG als suid root draaien, zodat het programma draait met
+alle rechten van de superuser.
+Hiermee sluit je de mogelijkheid uit dat bepaalde delen van het programma
+extern opgeslagen worden en door iedereen gelezen kunnen worden.
+Het is mij echter niet mogelijk om dit risiko in te schatten.
+Echter, als je het programma met suid root draait moet je alert blijven
+op het gevaar van Trojaanse paarden.
+Een Trojaans paard wat met de rechten van de superuser draait kan in
+het gehele systeem schade aanrichten.
+Als je om deze of een andere reden er voor kiest om GnuPG niet als root
+te draaien, kun je de waarschuwing onderdrukken door de instelling
+<tt>no-secmem-warning</tt> in <tt>~/.gnupg/options</tt> te zetten.
+
+
+<sect>Sleutels gebruiken<label id="GPG-Minihowto-Key">
+<p>
+<sect1>Een Sleutel aanmaken
+<p>
+
+Met
+<tscreen><verb>gpg --gen-key</verb></tscreen> 
+Wordt een nieuw sleutelpaar gemaakt (sleutelpaar: geheime en publieke sleutel).
+De eerste vraag is welk alogritme gebruikt wordt.
+Je kunt meer lezen over de algoritmes in
+<url url="http://www.hertreg.ac.uk/ss/pgpfaq.html" name="PGP DH
+vs. RSA FAQ"> of in <ref id="BSchneier" name="Applied Cryptography">.
+Je kunt gemakkelijk (en eigenlijk zou je dat ook moeten doen)
+DSA/ ElGamal gebruiken. Deze is niet gepatenteerd.
+ 
+<p>
+De volgende vraag is de lengte van de sleutel.
+Dit is afhankelijk van je eigen wensen.
+Je moet een keuze maken tussen veiligheid en rekentijd.
+Wanneer de sleutel langer is, is het risico dat de boodschap gekraakt
+wordt minder groot.
+Echter, een langere sleutel vergt ook meer rekentijd.
+Als rekentijd een punt is moet je nog steeds in gedachten houden dat
+je de sleutel een langere tijd gaat gebruiken.
+We weten allemaal dat de snelheid van computers toeneemt omdat
+processors steeds sneller en sneller worden.
+Houdt dit dus in gedachten.
+De minimale sleutellengte die GnuPG gebruikt is 768 bits.
+Hoewel, veel mensen vinden dat je eigenlijk een sleutel lengte van
+2048 bits zou moeten gebruiken, het maximum wat GnuPG momenteeel aan kan.
+Voor DSA is 1024 bits de standaard lengte.
+Wanneer de veiligheid de hoogste prioriteit heeft en rekentijd minder
+zwaar weegt moet je natuurlijk de grootst mogelijke sleutellengte
+kiezen.
+
+<p>
+Het systeem vraagt nu om je naam, een omschrijving en je e-mail adres
+in te voeren.
+De code wordt op basis van deze gegevens berekend.
+Naderhand kun je deze items nog wijzigen. Zie
+<ref id="GPG-Minihowto-KPAdministration" name="Sleutels Administreren">.
+
+<p>
+Tenslotte moet je een wachtwoord invoeren (eigenlijk is het meer een
+'wachtzin', aangezien er ook spaties in voor mogen komen).
+Dit wachtwoord wordt gebruikt om de funkties die bij je geheime
+sleutel horen te kunnen gebruiken.
+Een goed wachtwoord voldoet aan het volgende:
+<itemize>
+ <item>het is lang,
+ <item>het bevat speciale (niet alfanumerieke) tekens,
+ <item>het is iets speciaals (niet een naam),
+ <item>het is moeilijk te raden (dus GEEN namen, geboortedatums, telefoon nummers,
+       bankrekening nummers, namen van kinderen en dergelijke)
+</itemize>
+Door soms HoOfdlETters te gebruiken en sOMs NieT kun je nog meer
+veiligheid inbouwen.
+Wanneer je je wachtwoord bedenkt, zorg er voor dat je het NOOIT MEER VERGEET,
+aangezien je boodschappen dan onleesbaar zijn en je geheime sleutel
+dus onbruikbaar is.
+Het kan verstandig zijn om een soort certificaat met deze informatie te
+maken (uiteraard wel voorzichtig zijn dat niemand je wachtwoord
+in handen krijgt). Zie
+<ref id="GPG-Minihowto-Revoke" name="Intrekken">.
+
+<p>
+Als alles ingevoerd is begint het systeem de sleutels te genereren.
+Dit kan een tijdje duren.
+Gedurende die tijd wordt er veel toevallige (random) informatie
+verzameld.
+Door in de tussentijd op een ander scherm en met andere programma's
+door te werken help je het systeem goede random informatie te verzamelen.
+Je zult begrijpen dat er nooit de zelfde sleutel twee keer gegenereerd wordt.
+Iedere keer is de sleutel weer anders.
+Wanneer je nu een sleutel aanmaakt, en over 5 minuten weer met exact dezelfde
+invoer, krijg je twee verschillende sleutels.
+Nu begrijp je dus ook waarom je je wachtwoord niet moet vergeten.
+
+<sect1>Sleutels Exporteren
+<p>
+
+Het commando om de sleutel van een gebruiker te exporteren is:
+<tscreen><verb>gpg --export [UID]</verb></tscreen>
+Als er geen UID aangegeven is worden alle aanwezige sleutels geexporteerd.
+Normaliter gaat de uitvoer naar <tt>stdout</tt>.
+Met de <tt>-o</tt> optie is dit naar een file te sturen.
+Het kan aan te raden zijn de <tt>-a</tt> optie te gebruiken om de sleutel
+in 7-bits ASCII te schrijven inplaats van in een binaire file.
+
+<p>
+Door publieke sleutels te exporteren verbreedt je je horizon.
+Anderen kunnen je dan op een beveiligde manier benaderen.
+Je kunt dit doen door je publieke sleutel op je homepage te publiceren,
+met <tt>finger</tt>, met een sleutel server zoals
+http://www.pca.dfn.de/dfnpca/pgpkserv/
+of iedere andere methode die je kunt bedenken.
+
+<sect1>Sleutels Importeren
+<p>
+
+Wanneer je iemands publieke sleutel (of diverse publieke sleutels)
+hebt ontvangen, moet je ze aan je sleutel database toevoegen om ze
+te kunnen gebruiken.
+Het commando om een sleutel aan je database toe te voegen ziet er zo uit:
+<tscreen><verb>gpg --import [Filename]</verb></tscreen>
+Als je de Filename er niet bij zet wordt de informatie van <tt>stdin</tt>
+gelezen.
+
+<sect1>Sleutels Intrekken<label id="GPG-Minihowto-Revoke">
+<p>
+Er zijn verscheidene redenen denkbaar waarom je een bestaande sleutel zou
+willen intrekken.
+De gehieme sleutel kan bij voorbeeld gestolen zijn of in verkeerde
+handen gevallen, the UID is veranderd of de sleutel is niet lang
+genoeg meer, etc.
+In al deze gevallen is het commando om de sleutel in te trekken:
+<tscreen><verb>gpg --gen-revoke</verb></tscreen>
+Dit creeert een intrek-certificaat.
+<em>Om dit te doen heb je een gehieme sleutel nodig</em>,
+anders zou iedereen je certificaat kunnen intrekken.
+Dit heeft een nadeel. Als ik het wachtwoord niet ken is de sleutel onbruikbaar.
+Maar ik kan de sleutel niet intrekken !
+Om dit probleem te voorkomen is het wijs een intrek-certificaat te maken
+wanneer je een sleutelpaar maakt.
+Als je dat doet, bewaar het op een veilige plaats !
+Zorg er wel voor dat dit certificaat niet in verkeerde handen valt !!
+Je wilt natuurlijk voorkomen dat iemand anders het intrek-certificaat
+op jouw sleutel toepast en de sleutel onbruikbaar maakt.
+
+<sect1>Sleutels Administreren<label id="GPG-Minihowto-KPAdministration">
+<p>
+
+Bij het GnuPG systeem hoort een file die dienst doet als een
+soort database.
+In deze file wordt allerlei informatie over de sleutels opgeslagen.
+Onder andere de <em>Ownertrust</em> waarden.
+Voor meer informatie hierover, lees
+<ref id="GPG-Minihowto-KSigning" name="Sleutels signeren">).
+Met
+<tscreen><verb>gpg --list-keys</verb></tscreen>
+worden alle aanwezige sleutels getoond.
+Om ook de signaturen te zien, type:
+<tscreen><verb> gpg --list-sigs </verb></tscreen> 
+(zie <ref
+id="GPG-Minihowto-KSigning" name="Sleutels signeren"> voor nadere informatie). 
+Om de vingerafdrukken te zien, type:
+<tscreen><verb>gpg --fingerprint </verb></tscreen>
+Met vingerafdrukken (&quot;Fingerprints&quot;) kun je je er van verzekeren dat
+iemand werkelijk de persoon is die hij of zij beweert te zijn (bij voorbeeld
+met een telefoongesprek).
+Dit commando geeft een lijst van kleine getallen.
+
+Om de geheime sleutels te laten zien type je:
+<tscreen><verb>gpg --list-secret-keys</verb></tscreen> 
+Merk op dat het tonen van vingerafdrukken en signaturen van prive sleutels
+geen enkel nut heeft.
+<p>
+Om een publieke sleutel te verwijderen type je:
+<tscreen><verb>gpg --delete-key UID </verb></tscreen>
+Om een geheieme sleutel te verwijderen type je:
+<tscreen><verb> gpg --delete-secret-key </verb></tscreen> 
+<p>
+Er is nog een belangrijk commando om met sleutels om te gaan.
+<tscreen><verb>gpg --edit-key UID</verb></tscreen>
+Hiermee kun je onder andere de afloopdatum aanpassen, een vingerafdruk toevoegen
+en een sleutel signeren.
+
+<sect1>Sleutels signeren<label id="GPG-Minihowto-KSigning">
+<p>
+
+Zoals reeds vermeld in de inleiding, er is een significante Achilleshiel
+in het systeem.
+Dat is de authenticiteit van publieke sleutels.
+Als je een verkeerde publieke sleutel hebt, kun je wel dag zeggen tegen
+de waarde van de versleuteling.
+Om dit risico het hoofd te bieden is er de mogelijkheid om sleutels
+te signeren.
+Je plaatst dan je handtekening over de sleutel, zodat je absoluut
+zeker weet dat het de juiste sleutel is.
+Dit geeft de situatie waarin de handtekening bevestigt dan de <em>user ID</em>
+die in de sleutel genoemd is daadwerkelijk de eigenaar van de sleutel is.
+Met deze zekerheid kun je beginnen met encrypten.
+
+<p>
+Gebruik makend van het <tt>gpg --edit-key UID</tt> commando voor de sleutel
+die gesigneerd moet worden, kun je de sleutel signeren met
+het <tt>sign</tt> commando. 
+
+<p>
+<em>Je moet alleen een sleutel signeren als zijnde authentiek wanneer je
+ABSOLUUT ZEKER bent van de authenticiteit van de sleutel !!!!!</em>.
+Dus als je zeker weet dat je de sleutel persoonlijk overhandigd hebt gekregen
+(zoals op een <em>key signing party</em>) of je hebt de sleutel op een
+andere manier verkregen en de sleutel hebt gecontroleerd (bij voorbeeld
+telefonisch) met behulp van de vingerafdruk.
+Je moet nooit een sleutel signeren gebaseerd op welke aanname dan ook.
+
+<p>
+Gebaseerd om de beschikbare signaturen en
+&quot;ownertrusts&quot;
+bepaalt GnuPG de validiteit van sleutels.
+Ownertrust is een waarde waarmee je aangeeft tot op welk niveau je een
+bepaalde sleutel vertrouwt.
+De mogelijke waarden zijn
+<itemize>
+  <item> 1 = Onbekend
+  <item> 2 = Geen vertrouwen
+  <item> 3 = Marginaal vertrouwen
+  <item> 4 = Volledig vertrouwen
+</itemize>
+Als je de signatuur niet vertrouwt kun je dat aangeven en daarmee
+de signatuur negeren.
+Vertrouwensinformatie wordt niet in dezelfde file opgeslagen als de sleutels,
+maar in een aparte file.
+
+<sect>Encrypt en decrypt<label id="GPG-Minihowto-encrypt">
+
+<p>
+Nadat alles geinstalleerd is en geconfigureerd zoals we willen,
+kunne we beginnen met encrypten en decrypten.
+<p>
+Tijdens het encrypten en decrypten is het mogelijk om meer dan een
+prive sleutel in gebruik te hebben.
+In dat geval moet je de aktieve sleutel kiezen.
+Dit kan door de optie <tt>-u UID</tt> of de optie <tt>--local-user UID</tt>
+te gebruiken.
+Dit zorgt er voor dat de default sleutel vervangen wordt door de
+aangegeven sleutel.
+<p>
+Als je de ontvanger wilt veranderen kan dat door de optie <tt>-r</tt>
+of de optie <tt>--recipient</tt> te gebruiken.
+
+<sect1>Encrypten
+<p>
+
+Het commando om te encrypten is
+<tscreen><verb>gpg -e Recipient [Data]</verb></tscreen>
+of
+<tscreen><verb>gpg --encrypt Recipient [Data]</verb></tscreen>
+Om het risico te voorkomen dat iemand anders beweert jou te zijn,
+is het handig om alles wat je encrypt ook te signeren, zie
+<ref id="GPG-Minihowto-signatures" name="handtekeningen">.
+
+<sect1>Decrypten
+<p>Het commando voor decrypten is:
+<tscreen><verb>gpg [-d] [Data] </verb></tscreen>
+of
+<tscreen><verb>gpg [--decrypt] [Data]</verb></tscreen>
+Ook hier wordt <tt>stdout</tt> gebruikt, maar met de <tt>-o</tt> optie
+kun je de uitvoer naar een file redigeren.
+
+<sect>Signeren en handtekeningen controleren<label id="GPG-Minihowto-signatures">
+<p>
+
+Om data te signeren met je eigen handtekening, gebruik je het commando:
+<tscreen><verb>gpg -s (or --sign) [Data]</verb></tscreen>
+Hierbij vindt ook een compressie plaats.
+Dat houdt in dat het resultaat niet leesbaar is.
+Als je een leesbaar resultaat wilt, gebruik je:
+
+<tscreen><verb>gpg --clearsign [Data]</verb></tscreen> 
+Dit geeft een leesbaar resultaat.
+Verder doet dit hetzelfde (data signeren).
+
+Met
+<tscreen><verb>gpg -b (or --detach-sign) [Data]</verb></tscreen> 
+kun je een handtekeing in een aparte file maken.
+Het is aan te bevelen deze optie te gebruiken bij het signeren van
+binaire files, zoals bij voorbeeld archieven.
+Ook de <tt>--armot</tt> optie kan hier bijzonder bruikbaar zijn.
+
+<p>
+Vrij vaak zie je dat data zowel gecrypt als gesigneerd is.
+De volledige instruktie ziet er als volgt uit:
+<tscreen><verb>gpg [-u Sender] [-r Recipient] [--armor] --sign --encrypt [Data]
+</verb></tscreen>
+De funktie van de optie <tt>-u</tt> (<tt>--local-user</tt>) en <tt>-r</tt> 
+(<tt>--recipient</tt>) werken zoals hierboven beschreven.
+
+<P>
+Wanneer gecrypte data ook gesigneerd is, wordt de handtekening automatisch
+gecontroleerd wanneer de data gedecrypt wordt.
+Je kunt de handtekening van gesigneerde data controleren met het commando:
+<tscreen><verb>gpg [--verify] [Data]</verb></tscreen>
+Dit werkt natuurlijk alleen als je de publieke sleutel van de
+verzender hebt.
+
+<sect>Front ends<label id="GPG-Minihowto-frontends">
+<p>
+Om het leven met betrekking tot GnuPG een stuk gemakkelijker te maken
+is er een ruime keuze aan programma's die GnuPG encryptie gebruiken
+of ondersteunen.
+Er zijn grafische front ends waarmee je niet veel meer nodig hebt dan een
+klik op de muis voor het beheer van je sleutels en veel Email programma's
+(MUAs - Mail User Agents) waarmee je naadloos de Email kunt encrypten
+en signeren.
+Een vrijwel complete lijst van front ends is te zien op de
+<htmlurl url="http://www.gnupg.org/frontends.html" name="GnuPG Frontends"> pagina.
+We laten er in dit hoofdstuk een aantal de revue passeren.
+
+<sect1>Grafische interfaces
+<p>
+
+<sect2>GPA
+<p>
+<htmlurl url="http://www.gnupg.org/gpa.html" name="GPA">, de <em>GNU Privacy
+Assistant</em> is een grafische gebruiker interface voor de
+GNU Privacy Guard (GnuPG).
+Dit is het standaard grafische front end, gemaakt binnen het GnuPG project.
+Met GPA kun je je sleutelbos bekijken, sleutels importeren en exporteren,
+sleutels aanmaken, de eigenschappen van sleutels aanpassen en documenten
+encrypten, signeren en decrypten.
+Installeren van GPA is eenvoudig.
+De tarball downloaden, uitpakken en dan de gebruikelijke
+<tscreen><verb>./configure; make; make install.</verb></tscreen>
+Start het programma door
+<tscreen><verb>gpa</verb></tscreen>
+in te typen.
+
+<sect2>Seahorse
+<p>
+<htmlurl url="http://seahorse.sourceforge.net/" name="Seahorse">
+is een GNOME front end voor GnuPG.
+Het is te gebruiken voor signeren, encrypten, verifieren en decrypten
+van tekst en binaire files.
+De tekst kun je uit het clipboard halen of direkt schrijven in de
+ingebouwde editor.
+Seahorse is ook een sleutelbeheerder waarmee je vrijwel alle eigenschappen
+kan bewerken van de sleutels in je sleutelbos.
+Je kunt Seahorse installeren vanuit een Debian pakket (RPMs zijn momenteel
+niet beschikbaar) of vanuit een source tarball.
+Installeren vanaf source werkt net als bij ieder ander pakket.
+Downloaden, uitpakken, configure en make install.
+De installatie zet Seahorse in <tt>/usr/local</tt> en maakt een menu item
+is het Gnome 'Toepassingen' menu.
+
+<sect2>Geheimnis
+<p>
+
+<htmlurl url="http://geheimnis.sourceforge.net/" name="Geheimnis"> is een
+front end voor GnuPG die gebaseerd is op KDE.
+Het zou alle funkties moeten hebben die GPA of Seahorse ook hebben.
+Echter, toen ik het programma probeerde te installeren, liep ik vast
+op een bibliotheek die niet aanwezig bleek te zijn (/usr/lib/libfam.la).
+
+<sect1>Email programma's
+<p>
+De meeste populaire Email programma's (of MUAs) understeunen GnuPG.
+Hierbij zitten minimaal de volgende:
+<itemize>
+   <item>Mozilla
+   <item>Pine
+   <item>Kmail
+   <item>Eudora
+   <item>Mutt
+   <item>exmh
+</itemize>
+
+Er zijn er waarschijnlijk meer; het is nauwelijks mogelijk om ze
+allemaal uit te proberen.
+
+<p>
+Door GnuPG ondersteuning in je mail programma te gebruiken kun je boodschappen
+die met je publieke sleutel gecrypt zijn decrypten, boodschappen signeren
+zodat de ontvangende partij er zeker van kan zijn dat jij de auteur bent
+en je Email encrypten met de publieke sleutels van de geadresseerden.
+
+<sect2>Mozilla en Enigmail
+<p>
+Mozilla heeft van zichzelf geen understeuing voor GnuPG.
+Om GnuPG encryptie in Mozilla te gebruiken moet je een plugin installeren, zoals
+<htmlurl url="http://enigmail.mozdev.org/" name="EnigMail">.
+Enigmail is een "plugin" voor Mozilla/Netscape Mail waarmee gebruikers de
+mogelijkheid hebben om de authenticatie en encryptie faciliteiten van
+GPG en PGP software te gebruiken.
+Enigmail kan verstuurde mail encrypten en signeren, en ook ontvangen mail
+decrypten en controleren.
+Het kan ook publieke sleutels importeren en exporteren.
+
+<p>
+Installeren van EnigMail op een RedHat Linux systeem is bijzonder
+gemakkelijk, aangezien hier RPMs voor beschikbaar zijn.
+Er zijn twee paketten nodig die beide geinstalleerd moeten worden:
+<tt>mozilla-enigmail-0.39-3.i386.rpm</tt>
+en <tt>mozilla-ipc-0.99-0_rh7x.rpm</tt>.
+Start Mozilla (of Netscape 6.x) na het installeren van deze RPMs opnieuw
+en je kunt GnuPG in je Email gebruiken.
+Merk echter op dat EnigMail alleen de tekst van je boodschap versleutelt.
+Bijgevoegde files (attachments) worden door EnigMail niet gecrypt;
+files die je wilt bijvoegen moet je apart versleutelen.
+Op andere systemen moet je EnigMail waarschijnlijk vanaf source code
+installeren.
+
+<sect2>Kmail
+<p>
+Kmail, het standaard Email programma voor KDE heeft geintegreerde ondersteuning
+voor GnuPG en PGP encryptie.
+Om de zaak op te zetten zodat je boodschappen kunt signeren en decrypten
+moet je je GnuPG user ID invullen in de 'Identity' sectie van de
+Kmail configuratie.
+Wanneer je een nieuwe boodschap verstuurt, wordt de boodschap normaliter
+niet gesigneerd of versleuteld.
+Je moet hiervoor de 'Sign message' en 'Encrypt message' knoppen indrukken.
+
+<sect>Bronnen van informatie<label id="GPG-Minihowto-Informationsources">
+<p>
+
+<sect1>GnuPG
+<p>
+
+<itemize>
+ <item>De <url url="http://www.gnupg.org" name="GnuPG Homepage">
+
+ <item>De GnuPG Mailing list, inclusief archieven en beschrijvingen, op de
+ <htmlurl url="http://www.gnupg.org/docs.html" name="GnuPG Homepage">.
+
+ <item>De informatie die bij het GnuPG project is bijgesloten (aangepast tot
+       versie 0.9.2), hoewel niet uitputtend. En niet te vergeten:
+ <tscreen><verb>gpg --help </verb></tscreen> Dit is zeer waardevolle informatie.
+ 
+
+</itemize>
+
+<sect1>PGP
+<p>
+PGP is het oudere en nog steed wijd verspreide cryptografische programma.
+Door de jaren heen is hier veel over geschreven.
+Dit kan beschouwd worden als een zeer waardevolle bron van informatie.
+Veel van deze informatie is zo algemeen dat het ook voor GnuPG toegepast
+kan worden.
+Kijk eens naar de volgende URLs voor deze documenten:
+
+<itemize>
+ <item>De <url url="http://www.pgpi.com" name="Internationale PGP Homepage">
+ <item>De <url url="http://www.hertreg.ac.uk/ss/pgpfaq.html"
+       name="PGP DH vs. RSA FAQ"> bevat informatie over de verschillen tussen
+       deze twee algoritmen. Dit zijn de algoritmen die door GnuPG
+       gebruikt worden.
+</itemize>
+
+<sect1>Keyservers
+<p>
+<itemize>
+ <item> <url url="http://www.keyserver.net" name="Keyserver.net">
+ <item> <url url="http://wwwkeys.eu.pgp.net">
+</itemize>
+
+<sect1>Boeken
+<p>
+
+<itemize>
+ <item>B. Schneier, &quot;Applied Cryptography, Second
+ Edition&quot;, Wiley, 1996 <label id="BSchneier"> Deutsche Ausgabe
+ unter dem Titel &quot;Angewandte Kryptographie&quot;, Addison-Wesley, 1996
+</itemize>
+
+
+<sect>Over dit document 
+<p>
+Copyright &copy; 1999 Brenno J.S.A.A.F. de Winter (Engelse versie)
+Copyright &copy; 1999 Michael Fischer v. Mollard (originele Duitse versie)
+Copyright &copy; 2002 Arjen Baart (Nederlandse versie)
+<p>
+ Dit document is vrije documentatie en je kunt het herdistribueren en/of
+ aanpassen onder de voorwaarden van de GNU Library General Public
+ License als gepubliceerd door de Free Software Foundation;
+ versie 2 van deze License, of een latere versie.
+ 
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+<p>
+ You should have received a copy of the GNU Library General Public
+ License along with this library; if not, write to the
+ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ Boston, MA 02111-1307, USA.
+
+<sect1>Versies
+<p>
+Originele Duitse versie:
+Versie 0.1 was de eerste versie in Duits
+<p>
+<bf>Versie 0.1.0 (Engels) 30 April 1999, Koninginnedag.</bf>
+<itemize>
+<item>
+     Deze versie is de vertaling van de Duitse versie in het Engels met
+     een paar aanpassingen.
+</itemize>
+
+<p>
+<bf>Versie 0.1.1 (Duits)</bf>
+<p>
+<itemize>
+  <item>Nieuwe paragraaf &quot;Grenzen aan beveiliging&quot;
+  <item>Uitleg van handtekeningen verbeterd
+  <item>Wijzigingen na commentaar van Werner Koch (bedankt!)
+</itemize>
+
+<p>
+<bf>Versie 0.1.2 (Engels) 3 April, 2002</bf>
+<itemize>
+   <item>Een aantal typefouten gecorrigeerd
+   <item>Nieuw hoofdstuk over front ends
+</itemize>
+
+<p>
+<bf>Versie 0.1.3 (Nederlands) 17 Mei, 2002</bf>
+<itemize>
+   <item>Deze versie is een vertaling van de Engelse versie in het Nederlands.
+</itemize>
+
+Alle wijzigingen zijn gedocumenteerd in een diff file:
+<url url="http://www.stud.uni-goettingen.de/~s070674/GnuPGMiniHowto/" name="dieses Dokument">
+<p>
+Voor de Engelse of Nederlandse versie:
+Alle opmerkingen over dit document kunnen gestuurd worden naar
+Brenno J.S.A.A.F. de Winter
+(<tt><htmlurl url="mailto:brenno@dewinter.com" name="brenno@dewinter.com"></tt>).
+of Arjen Baart
+(<tt><htmlurl url="mailto:arjen@andromeda.nl" name="arjen@andromeda.nl"></tt>).
+Je opmerkingen helpen ons een beter document te schrijven en worden zeer
+gewaardeerd.
+
+Voor de Duitse versie:
+Anregungen, Kritik, Verbesserungen und Erweiterungen
+einfach an Michael Fischer v. Mollard (<tt><htmlurl
+url="mailto:fischer@math.uni-goettingen.de"
+name="fischer@math.uni-goettingen.de"></tt>) senden, damit dieses
+Dokument weiter verbessert werden kann.
+
+</article>

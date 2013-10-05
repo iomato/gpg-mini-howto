@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.7">
+ <TITLE>Gnu Privacy Guard (GnuPG) Mini Howto (swedish): Användning av nycklar</TITLE>
+ <LINK HREF="GPGMiniHowto-4.html" REL=next>
+ <LINK HREF="GPGMiniHowto-2.html" REL=previous>
+ <LINK HREF="GPGMiniHowto.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="GPGMiniHowto-4.html">Nästa</A>
+<A HREF="GPGMiniHowto-2.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc3">Innehåll</A>
+<HR>
+<H2><A NAME="GPG-Minihowto-Key"></A> <A NAME="s3">3. Användning av nycklar</A></H2>
+
+<P>
+<H2><A NAME="ss3.1">3.1 Skapa en nyckel</A>
+</H2>
+
+<P>
+<P>Med kommandot
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --gen-key
+</PRE>
+</CODE></BLOCKQUOTE>
+ 
+skapas ett nytt nyckelpar (består av en hemlig eller privat nyckel och en känd nyckel). Den första frågan behandlar
+vilken algoritm som ska användas. Mer att läsa om algoritmer kan hittas på
+<A HREF="http://www.hertreg.ac.uk/ss/pgpfaq.html">PGP DH vs. RSA FAQ</A> eller på
+<A HREF="GPGMiniHowto-6.html#BSchneier">Applied Cryptography</A>. Man kan (t.o.m bör, eftersom det är så spritt) envända DSA/ElGamal. Denna algoritm är inte patenterad.
+<P>
+<P>Nästa steg är att bestämma nyckellängd. Detta beror mycket på användaren. Ett val mellan säkrhet å ena sidan och beräkningstid å andra sidan. Ju längre en nyckel är desto mindre är risken att den knäcks, men det tar längre tid att kryptera och avkryptera. Även om processortid är viktig bör det tas i beaktning att den skapade nyckeln kommer att användas för en relativt lång tid framöver. Vi känner till att den matematiska förmågan hos datorer ständigt ökar, så i framtiden kanske det inte kommer att vara några problem. Den minsta nyckellängden GnuPG tillåter är 768 bitar. Vissa säger att man inte bör använda mindre nycklar än 2048 bitar (vilket är max för GnuPG). DSA har 1024 bitar som standardlängd. När säkerhet är viktigare än processortid bör största tillgängliga nyckellängd väljas.
+<P>
+<P>Programmet frågar nu efter namn, kommentar och emailadress. Baserat på denna information kan nu nyckeln beräknas. Denna information kan ändras senare. Se
+<A HREF="#GPG-Minihowto-KPAdministration">Administration av nycklar</A>. Välj en längre emailadress eftersom denna kommer att signeras. Om adressen modifieras kommer inte signaturen att gälla längre. Sedan efterfrågas ett kommentarsfält. Informationen här kan vara godtycklig, men bör vara relevant.
+<P>
+<P>Slutligen krävs ett lösenord (lösenfras är ett bättre ord i sammanhanget eftersom blanksteg kan användas). Detta lösen krävs för att kunna använda den privata nyckeln. Ett bra lösen innehåller följande element:
+<UL>
+<LI>långt (använd gärna en hel mening),</LI>
+<LI>innehåller specialtecken (ej bokstäver eller siffror),</LI>
+<LI>är något speciellt (inte ett namn),</LI>
+<LI>svårgissat (d.v.s INTE namn, födelsedagar, telefonnummer, kreditkortsnummer etc.)</LI>
+</UL>
+
+Genom att ibland använda KaPItaLeR oCH IblANd InTe kan ytterligare säkerhet byggas upp.
+Detta lösen FÅR EJ GLÖMMAS BORT. Nycklarna blir värdelösa eftersom meddelanden inte kan avkodas. Se
+&lt; ref id="GPG-Minihowto-Revoke" name="Revoke">.
+<P>När all information har matats in startar själva nyckelskapandet. Den här processen tar lite tid. Systemet insamlar en stor mängd slumpartad data. Om en nyckel skapas 5 minuter senare med exakt samma information kommer nyckeln att se helt annorlunda ut.
+<P>
+<P>
+<H2><A NAME="ss3.2">3.2 Exportera nycklar</A>
+</H2>
+
+<P>
+<P>Kommandot för att exportera nycklar för en viss användare är:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --export [UID]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Om ingen UID anges kommer alla nycklar att exporteras. All utmatning sker till <CODE>stdout</CODE> om inget annat anges via <CODE>-o</CODE>-modifieraren för att skapa en fil. Det kan vara vettigt att använda modifieraren <CODE>-a</CODE> för att få all utmatning i 7-bitars ASCII istället för i binär form.
+<P>
+<P>När en känd nyckel har exporteras kan andra användare som fått sig denna nyckel tillskickad skicka meddelanden krypterade så att bara innehavaren av den privata nyckeln kan läsa dem. Nyckeln kan också spridas på hemsidor, <CODE>finger</CODE>-information, lagras på en nyckelserver eller andra sätt.
+<P>
+<H2><A NAME="ss3.3">3.3 Importera nycklar</A>
+</H2>
+
+<P>
+<P>För att kunna skicka meddelanden krypterade med en speciell känd nyckel måste denna kända nyckel läggas till din nyckelring. För att importera en nyckel, skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --import [Filnamn]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Om Filnamn inte specifieras tas informationen från <CODE>stdin</CODE>.
+<P>
+<H2><A NAME="GPG-Minihowto-Revoke"></A> <A NAME="ss3.4">3.4 Spärra en nyckel</A>
+</H2>
+
+<P>En användare kan vilja spärra en nyckel av flera skäl, t.ex:
+den hemliga/privata nyckeln har stulits, UID har ändrats, nyckeln är för liten etc. I alla dessa fall används kommandot:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --gen-revoke
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Detta skapar ett spärr-certifikat.
+<EM>För att göra detta krävs en privat nyckel</EM>, annars skulle vem som helst kunna spärra en godtycklig nyckel. Detta har en baksida; om lösen är okänt är nyckelt obrukbar, men den kan inte spärras! För att komma runt detta, skapa ett spärr-certifikat när ett nyckelpar skapas, och förvara detta certifikat på ett säkert ställe. Om någon får tag på detta certifikat kan denne spärra nycklar som han/hon inte är behörig till.
+<P>
+<H2><A NAME="GPG-Minihowto-KPAdministration"></A> <A NAME="ss3.5">3.5 Administration av nycklar</A>
+</H2>
+
+<P>
+<P>Med systemed följer en fil som fungerar som en sorts database. Det är i denna fil
+som alla nycklar och all information om dessa nycklar lagras (allt förutom ägarens 
+tillit, se <A HREF="#GPG-Minihowto-KSigning">Signera nycklar</A>). Med
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --list-keys
+</PRE>
+</CODE></BLOCKQUOTE>
+
+visas alla nycklar. För att även se signaturer, skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+ gpg --list-sigs 
+</PRE>
+</CODE></BLOCKQUOTE>
+ 
+(se 
+<A HREF="#GPG-Minihowto-KSigning">Signera nycklar</A> för mer information). 
+För att se fingeravtrycken, skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --fingerprint 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Man vill se fingeravtryck för säkerställa att en person är den han eller hon
+utger sig för att vara. Detta kommando ger som resultat en lista av relativt
+små nummer.
+<P>För att lista alla privata eller hemliga nycklar, skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --list-secret-keys
+</PRE>
+</CODE></BLOCKQUOTE>
+ 
+Notera att det är meningslöst att visa fingeravtryck och signaturer på privata nycklar.
+<P>För att radera en känd nyckel, skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --delete-key UID 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+För att radera en privat eller hemlig nyckel, skriv:
+<BLOCKQUOTE><CODE>
+<PRE>
+ gpg --delete-secret-key 
+</PRE>
+</CODE></BLOCKQUOTE>
+ 
+<P>Ett kommando som är viktigt att komma ihåg när nycklar behöver modifieras:
+<BLOCKQUOTE><CODE>
+<PRE>
+gpg --edit-key UID
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Med detta kommando kan nycklar editeras (bl.a.) med avseende på giltighetstid, fingeravtryck och signering. För detta krävs naturligtvis ett lösen.
+<P>
+<H2><A NAME="GPG-Minihowto-KSigning"></A> <A NAME="ss3.6">3.6 Signera nycklar</A>
+</H2>
+
+<P>
+<P>Som tidigare nämnts finns det en Akilleshäl i systemet - äktheten av kända nycklar. Om en falsk känd nyckel används för kryptering försvinner säkerheten sin kos. För att komma runt dessa risker finns möjligheten att signera nycklar. En signatur placeras över nyckeln så att dess ursprung kan ställas utom allt tvivel. I detta läge har signaturen bevisat att nyckeln är äkta. Krypteringen kan påbörjas.
+<P>
+<P>Med hjälp av kommandot <CODE>gpg --edit-key UID</CODE> kan nycklar signeras genom att använda <CODE>sign</CODE> -kommandot.
+<P>
+<P><EM>En nyckel skall endast signeras om det är STÄLLT UTOM ALLT TVIVEL att nyckeln är äkta!!</EM>. Om det är säkerställt (t.ex. via telefon) att en nyckel är äkta, är det ok att signera den. Signera nycklar baserat på fakta, aldrig på antaganden. Om en falsk nyckel signeras drabbas säkerheten.
+<P>
+<P>GnuPG baserar äktheten av en nyckel på signaturer och 
+&quot;ägartillit&quot;. Ägartillit är ett tillitsvärde som innehavaren kan sätta på nycklar. Som värden kan användas:
+<UL>
+<LI> 1 = Vet ej</LI>
+<LI> 2 = Litar INTE på</LI>
+<LI> 3 = Litar LITE på</LI>
+<LI> 4 = Litar HELT på</LI>
+</UL>
+
+Om en användare inte litar på en signatur kan detta anges här. Denna information sparas i en separat fil.
+<P>
+<HR>
+<A HREF="GPGMiniHowto-4.html">Nästa</A>
+<A HREF="GPGMiniHowto-2.html">Föregående</A>
+<A HREF="GPGMiniHowto.html#toc3">Innehåll</A>
+</BODY>
+</HTML>
